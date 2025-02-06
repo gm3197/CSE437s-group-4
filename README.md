@@ -1,11 +1,11 @@
-# SP2025: Group &lt;Group Number&gt; &lt;Project Name&gt;
+# SP2025: Group &lt;4&gt; &lt;ReceiptME&gt;
 
 Name your repository using the following format:  
 **SP2025_Group_&lt;Group Number&gt;**  
 (Example: SP2025_Group_9)
 
 ## Team Members
-- **&lt;Member Name&gt;**: &lt;Email Address&gt; ; &lt;Github ID&gt;
+- **&lt;Hank Twichell&gt;**: &lt;htwichell@wustl.edu&gt; ; &lt;hanktwichell&gt;
 - **&lt;Member Name&gt;**: &lt;Email Address&gt; ; &lt;Github ID&gt;
 - **&lt;Member Name&gt;**: &lt;Email Address&gt; ; &lt;Github ID&gt;
 
