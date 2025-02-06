@@ -240,3 +240,6 @@ xcuserdata/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,xcode,python,linux
 
+# Append xcode user (jimmy) gitignore line to existing gitignore to resolve merge conflict
+ReceiptME/ReceiptME.xcodeproj/project.xcworkspace/xcuserdata/jimmylancaster.xcuserdatad/UserInterfaceState.xcuserstate
+
