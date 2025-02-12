@@ -1,1 +1,4 @@
 bottle
+psycopg[binary]
+google-auth
+requests
