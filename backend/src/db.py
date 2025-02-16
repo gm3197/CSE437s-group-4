@@ -1,5 +1,6 @@
 import psycopg
 import random
+import string
 
 def connect():
 	try:
