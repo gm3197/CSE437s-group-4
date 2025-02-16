@@ -7,8 +7,8 @@
 import SwiftUI
 import AuthenticationServices
 
-//import GoogleSignIn
-//import GoogleSignInSwift
+import GoogleSignIn
+import GoogleSignInSwift
 
 
 
@@ -22,7 +22,7 @@ struct AuthView: View {
         if isAuthenticated {
             ContentView()
         } else {
-            NavigationView {
+            NavigationStack {
                 ZStack {
                     // 1) Light gray background to fill the entire screen
                     Color(UIColor.systemGray6)
@@ -111,20 +111,16 @@ struct AuthView: View {
                             .frame(height: 45)
                             .cornerRadius(8)
                             
-                            Button(action: {
-                                // Handle Google Sign-In
-                                signInWithGoogle()
-                            }) {
-                                GoogleSignInButton(
-                                    //scheme: GoogleSignInButtonColorScheme,
-                                    style: .standard,
-                                    //state: GoogleSignInButtonState,
-                                    action: signInWithGoogle())
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 45)
-                                .background(Color.red)
-                                .cornerRadius(8)
-                            }
+                            GoogleSignInButton(
+                                //scheme: GoogleSignInButtonColorScheme,
+                                //style: .standard,
+                                //state: GoogleSignInButtonState,
+                                action: { signInWithGoogle() } )
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 45)
+                            .background(Color.red)
+                            .cornerRadius(8)
+                            
                         }
                         .padding(.bottom, 30)
                     }
@@ -134,10 +130,99 @@ struct AuthView: View {
             }
         }
     }
+    func signInWithGoogle() {
+        if let rootViewController = getRootViewController() {
+            GIDSignIn.sharedInstance.signIn(
+                withPresenting: rootViewController) { signInResult, error in
+                    guard let result = signInResult else {
+                        // Inspect error
+                        print("Error with root view controller: \(error?.localizedDescription ?? "Unknown error")")
+                        return
+                    }
+                    
+                    // If sign in succeeded, display the app's main content View.
+                    
+                    // Access user information
+                    let user = result.user
+                    let userId = user.userID ?? "No ID found" // given ?
+                    let userEmail = user.profile?.email ?? "No email found"
+                    let userName = user.profile?.name ?? "No username found"
+                    
+                    print("Google Sign-In Successful!")
+                    print("User ID: \(userId)")
+                    print("Email: \(userEmail)")
+                    print("Name: \(userName)")
+                    
+                    
+            
+                    
+                    // also pass id tokens to backend...
+                    guard error == nil else { return }
+                    guard let signInResult = signInResult else { return }
+
+                    signInResult.user.refreshTokensIfNeeded { user, error in
+                        guard error == nil else { return }
+                        guard let user = user else { return }
+
+                        guard let idToken = user.idToken else { return }
+                        // Send ID token to backend (example below).
+                        
+                        sendTokenToBackend(idToken: idToken.tokenString)
+                    }
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    // redirect
+    //                ContentView()
+                    isAuthenticated = true
+                }
+            }
+        else {
+            print("Error: Unable to get root view controller")
+        }
+        
+    } // end function
+    
+    
+    func sendTokenToBackend(idToken: String) {
+        guard let authData = try? JSONEncoder().encode(["idToken": idToken]) else {
+            return
+        }
+        let url = URL(string: "http://172.27.65.36:8080/auth/google/token")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let task = URLSession.shared.uploadTask(with: request, from: authData) { data, response, error in
+            // Handle response from your backend.
+        }
+        task.resume()
+    }
 }
 
 struct AuthView_Previews: PreviewProvider {
     static var previews: some View {
         AuthView()
     }
+}
+
+
+func getRootViewController() -> UIViewController? {
+    guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+          let window = scene.windows.first,
+          let rootVC = window.rootViewController else {
+        return nil
+    }
+    return rootVC
+}
+
+
+
+func signOutFromGoogle(sender: Any){
+    GIDSignIn.sharedInstance.signOut()
+    print("User signed out of Google account")
 }

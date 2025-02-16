@@ -12,8 +12,11 @@ import GoogleSignIn
 import GoogleSignInSwift
 
 
+
+
 @main
 struct ReceiptMEApp: App {
+    
     var body: some Scene {
         WindowGroup {
             AuthView()
@@ -33,6 +36,7 @@ struct ReceiptMEApp: App {
                    
                 }
         }
+        
     }
 }
 
