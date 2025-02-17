@@ -2,3 +2,5 @@ bottle
 psycopg[binary]
 google-auth
 requests
+pytesseract
+openai
