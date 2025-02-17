@@ -6,6 +6,8 @@ from PIL import Image
 import pytesseract
 from openai import OpenAI
 import json
+import io
+import os
 
 openai_client = OpenAI()
 
@@ -57,6 +59,53 @@ def get_receipt(receipt_id):
 
 	return receipt
 
+@bottle.get("/receipts/<receipt_id>/scan.png")
+def get_receipt_img(receipt_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	receipt = db.get_receipt(receipt_id)
+
+	if receipt is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if receipt["owner_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	return bottle.static_file(f"{receipt_id}.png", "receipts")
+
+@bottle.get("/receipts/<receipt_id>/items/<item_id>/scan.png")
+def get_receipt_item_img(receipt_id, item_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	receipt_item = db.get_receipt_item(receipt_id, item_id)	
+	if receipt_item is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if receipt_item["owner_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	bbox = receipt_item["bbox"]
+
+	img = Image.open(f"receipts/{receipt_id}.png")
+	img_crop = img.crop((bbox["left"], bbox["top"], bbox["right"], bbox["bottom"]))
+
+	img_byte_arr = io.BytesIO()
+	img_crop.save(img_byte_arr, format='PNG')
+	img_byte_arr = img_byte_arr.getvalue()
+
+	bottle.response.content_type = "image/png"
+	return img_byte_arr
+
 
 @bottle.post("/receipts/auto")
 def add_receipt_auto():
@@ -66,9 +115,9 @@ def add_receipt_auto():
 		return "Unauthorized"
 
 	img = Image.open(bottle.request.body)
-	receipt_text = pytesseract.image_to_string(img, lang="eng", config="--psm 6")
+	receipt_lines = get_receipt_lines(img)
 
-	receipt_text = clean_receipt_text(receipt_text)
+	message = "\n".join(f"Line {i}: {line['text']}" for i, line in enumerate(receipt_lines))
 
 	res = openai_client.chat.completions.create(
 		model="gpt-4o-mini",
@@ -76,13 +125,13 @@ def add_receipt_auto():
 			"role": "system",
 			"content": [{
 				"type": "text",
-				"text": "You will be provided with the OCR extracted text from a receipt. Parse the text and provide the requested JSON formatted output. OCR outputs are inherently messy, so extract only the relevant information."
+				"text": "You will be provided with the OCR extracted text from a receipt with line numbers. Parse the text and provide the requested JSON formatted output. OCR outputs are inherently messy, so extract only the relevant information."
 			}]
 		}, {
 			"role": "user",
 			"content": [{
 				"type": "text",
-				"text": receipt_text
+				"text": message
 			}]
 		}],
 		response_format={
@@ -122,11 +171,16 @@ def add_receipt_auto():
 									"cost": {
 										"type": "number",
 										"description": "Cost of the individual item."
+									},
+									"line_number": {
+										"type": "number",
+										"description": "The line number that you got this information from."
 									}
 								},
 								"required": [
 									"description",
-									"cost"
+									"cost",
+									"line_number"
 								],
 								"additionalProperties": False
 							}
@@ -167,20 +221,48 @@ def add_receipt_auto():
 			print("missing field: ", required_field)
 			return False
 
-	receipt_id = save_receipt(user_id, receipt_json)
+	receipt_id = save_receipt(user_id, receipt_json, receipt_lines)
+
+	img.save(f"receipts/{receipt_id}.png", "PNG")
 
 	return {
 		"success": True,
 		"receipt_id": receipt_id
 	}
 
-def clean_receipt_text(text):
-	lines = text.split("\n")
-	out = ""
+def get_receipt_lines(img):
+	tesseract_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT, config="--psm 6")
+	lines = []
+	for i in range(len(tesseract_data["text"])):
+		line_no = tesseract_data["line_num"][i]
+		left = tesseract_data["left"][i]
+		top = tesseract_data["top"][i]
+		height = tesseract_data["height"][i]
+		width = tesseract_data["width"][i]
+		text = tesseract_data["text"][i]
+		
+		if text == "":
+			text = " "
+
+		if line_no + 1 > len(lines):
+			lines.append({
+				"text": text,
+				"left": left,
+				"top": top,
+				"right": left + width,
+				"bottom": top + height,
+			})
+		else:
+			lines[line_no]["text"] += text + " "
+			if left + width > lines[line_no]["right"]:
+				lines[line_no]["right"] = left + width
+			if top + height > lines[line_no]["bottom"]:
+				lines[line_no]["bottom"] = top + height
+	out_lines = []
 	for line in lines:
-		if "@" not in line:
-			out += line + "\n"
-	return out
+		if "@" not in line["text"]:
+			out_lines.append(line)
+	return out_lines
 
 def receipt_verify(data):
 	items_subtotal = 0
@@ -196,12 +278,16 @@ def receipt_verify(data):
 	
 	return True
 
-def save_receipt(user_id, data):
+def save_receipt(user_id, data, receipt_lines):
 	tax = round(data["total"] - data["subtotal"], 2)
 	receipt_id = db.create_receipt(user_id, data["date"], data["name"], data["merchant_address"] or "", data["merchant_website"] or "", data["payment_method"] or "", tax, receipt_verify(data))
 	for item in data["items"]:
-		db.create_receipt_item(receipt_id, item["description"], round(item["cost"], 2))
+		receipt_line = receipt_lines[item["line_number"]]
+		db.create_receipt_item(receipt_id, item["description"], round(item["cost"], 2), receipt_line["left"], receipt_line["top"], receipt_line["right"], receipt_line["bottom"])
 	return receipt_id
+
+if not os.path.exists("receipts"):
+	os.makedirs("receipts")
 
 db.init()
 bottle.run(host='0.0.0.0', port=8080, debug=False)
