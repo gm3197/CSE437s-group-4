@@ -1,3 +1,9 @@
+// POST /receipts/auto
+struct ReceiptScanResult: Codable {
+	var success: Bool
+	var receipt_id: Int? // present if success == true
+}
+
 // GET /receipts
 struct ReceiptList: Codable {
 	var receipts: [ReceiptPreview]
