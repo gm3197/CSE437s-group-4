@@ -72,7 +72,7 @@ def list_receipts(user_id):
 				"id": row[0],
 				"date": row[1].__str__(),
 				"merchant": row[2],
-				"total": row[3],
+				"total": round(row[3], 2),
 				"clean": row[4]
 			})
 
@@ -101,7 +101,7 @@ def get_receipt(receipt_id):
 			out_items.append({
 				"id": item[0],
 				"description": item[1],
-				"price": item[2]
+				"price": round(item[2], 2)
 			})
 
 		return {
