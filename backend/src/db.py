@@ -35,10 +35,10 @@ def check_session_token(token):
 			"SELECT id FROM users WHERE session_token = %s", 
 			(token,)
 		)
-		user_id = cur.fetchone()[0]
-		if user_id is None:
+		user = cur.fetchone()
+		if user is None:
 			return None, False
-		return user_id, True
+		return user[0], True
 
 def create_receipt(user_id, date, merchant, merchant_address, merchant_domain, payment_method, tax, clean):
 	with connect() as conn:
@@ -147,3 +147,8 @@ def get_receipt_item(receipt_id, item_id):
 				"bottom": row[5]
 			}
 		}
+
+def update_receipt_item(item_id, price, description):
+	with connect() as conn:
+		cur = conn.cursor()
+		cur.execute("UPDATE receipt_items SET price = %s, description = %s WHERE id = %s", (price, description, item_id))

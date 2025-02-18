@@ -59,6 +59,32 @@ def get_receipt(receipt_id):
 
 	return receipt
 
+@bottle.patch("/receipts/<receipt_id>/items/<item_id>")
+def edit_receipt_item(receipt_id, item_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	receipt_item = db.get_receipt_item(receipt_id, item_id)	
+	if receipt_item is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if receipt_item["owner_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	req_data = bottle.request.json
+	if req_data is None or "price" not in req_data or "description" not in req_data:
+		bottle.response.status = 400
+		return "Bad request"
+
+	db.update_receipt_item(item_id, req_data["price"], req_data["description"])
+
+	bottle.response.status = 200
+	return
+
 @bottle.get("/receipts/<receipt_id>/scan.png")
 def get_receipt_img(receipt_id):
 	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
