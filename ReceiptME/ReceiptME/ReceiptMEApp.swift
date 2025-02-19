@@ -12,8 +12,6 @@ import GoogleSignIn
 import GoogleSignInSwift
 
 
-
-
 @main
 struct ReceiptMEApp: App {
     
@@ -40,18 +38,3 @@ struct ReceiptMEApp: App {
     }
 }
 
-
-
-//func application( // not finished
-//  _ application: UIApplication,
-//  didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-//) -> Bool {
-//  GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-//    if error != nil || user == nil {
-//      // Show the app's signed-out state.
-//    } else {
-//      // Show the app's signed-in state.
-//    }
-//  }
-//  return true
-//}

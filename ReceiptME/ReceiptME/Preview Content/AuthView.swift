@@ -17,10 +17,15 @@ struct AuthView: View {
     @State private var password: String = ""
     @State private var isSignIn: Bool = true // sign in vs sign up
     @State private var isAuthenticated = false // to redirect to home page
+    
+    // initialize var name, set to optional string type
+    @AppStorage("user_permanent_token") var backend_token: String?
 
     var body: some View {
         if isAuthenticated {
             ContentView()
+//        } else if @AppStrorage("user_permanent_token") != 0 { // token value already exists
+//           ContentView()
         } else {
             NavigationStack {
                 ZStack {
@@ -153,9 +158,6 @@ struct AuthView: View {
                     print("Email: \(userEmail)")
                     print("Name: \(userName)")
                     
-                    
-            
-                    
                     // also pass id tokens to backend...
                     guard error == nil else { return }
                     guard let signInResult = signInResult else { return }
@@ -169,15 +171,7 @@ struct AuthView: View {
                         
                         sendTokenToBackend(idToken: idToken.tokenString)
                     }
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    // redirect
-    //                ContentView()
+                     // redirect
                     isAuthenticated = true
                 }
             }
@@ -185,7 +179,7 @@ struct AuthView: View {
             print("Error: Unable to get root view controller")
         }
         
-    } // end function
+    }
     
     
     func sendTokenToBackend(idToken: String) {
@@ -199,6 +193,33 @@ struct AuthView: View {
 
         let task = URLSession.shared.uploadTask(with: request, from: authData) { data, response, error in
             // Handle response from your backend.
+            
+            struct loginResponse: Codable {
+                var session: String
+            }
+            
+            let decoder = JSONDecoder()
+            
+            guard let unwrapped_data = data else {
+                return
+            }
+            
+            do{
+                let session_token = try  decoder.decode(loginResponse.self, from: unwrapped_data)
+                
+                print("Backend data: \(session_token.session)")
+                print("Backend Response: \(String(describing: response))")
+                                
+                // set @AppStorage variable
+                backend_token = session_token.session
+                print("Got backend token: \(backend_token ?? "None")")
+            
+                
+            } catch {
+                print("Error descoding JSON \(error)")
+            }
+            
+            
         }
         task.resume()
     }
@@ -219,7 +240,6 @@ func getRootViewController() -> UIViewController? {
     }
     return rootVC
 }
-
 
 
 func signOutFromGoogle(sender: Any){
