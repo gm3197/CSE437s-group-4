@@ -7,20 +7,26 @@
 
 import SwiftUI
 
+import GoogleSignIn
+import GoogleSignInSwift
+
 struct ContentView: View {
+    
+    @AppStorage("user_permanent_token") var backend_token: String?
+    
     var body: some View {
-        TabView {
-            ScanView()
-                .tabItem {
-                    Image(systemName: "camera")
-                    Text("Scan")
-                }
-            
-            DashboardView()
-                .tabItem {
-                    Image(systemName: "list.bullet")
-                    Text("Dashboard")
-                }
+        VStack {
+            Image(systemName: "globe")
+                .imageScale(.large)
+                .foregroundStyle(.tint)
+            Text("Hello, world!")
+            Text(backend_token ?? "No backend token found")
         }
+        .padding()
+        .navigationTitle("Main Page")
     }
+}
+
+#Preview {
+    ContentView()
 }
