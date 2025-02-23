@@ -186,7 +186,7 @@ struct AuthView: View {
         guard let authData = try? JSONEncoder().encode(["idToken": idToken]) else {
             return
         }
-        let url = URL(string: "http://172.27.65.36:8080/auth/google/token")!
+        let url = URL(string: "https://7a5a-128-252-25-34.ngrok-free.app/auth/google/token")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
