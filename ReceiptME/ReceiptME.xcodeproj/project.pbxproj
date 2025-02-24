@@ -444,6 +444,10 @@
 				GIDClientID = "";
 				"GIDClientID[arch=*]" = "com.googleusercontent.apps.650383131525-anbr9ft0hfl03jbhbl21sokpgchc12tg";
 				INFOPLIST_FILE = ReceiptME/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to camera to scan receipts";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app needs permission to save receipt images to your photo library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to your photo library to select images of receipts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -456,7 +460,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				NEW_SETTING = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.washU.ReceiptME;
+				PRODUCT_BUNDLE_IDENTIFIER = com.washU.ReceiptME01;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -480,6 +484,10 @@
 				GIDClientID = "";
 				"GIDClientID[arch=*]" = "com.googleusercontent.apps.650383131525-anbr9ft0hfl03jbhbl21sokpgchc12tg";
 				INFOPLIST_FILE = ReceiptME/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to camera to scan receipts";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app needs permission to save receipt images to your photo library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to your photo library to select images of receipts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -492,7 +500,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				NEW_SETTING = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.washU.ReceiptME;
+				PRODUCT_BUNDLE_IDENTIFIER = com.washU.ReceiptME01;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

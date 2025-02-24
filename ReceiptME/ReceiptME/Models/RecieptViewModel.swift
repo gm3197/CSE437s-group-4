@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AVFoundation
 
 class ReceiptViewModel: ObservableObject {
     @Published var receipts: [Receipt] = []
@@ -25,6 +26,16 @@ class ReceiptViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.receipts.append(receipt)
             self.selectedReceipt = receipt  // ✅ Set for immediate navigation
+        }
+    }
+
+    func requestCameraPermission() {
+        AVCaptureDevice.requestAccess(for: .video) { granted in
+            if granted {
+                print("Camera access granted")
+            } else {
+                print("Camera access denied")
+            }
         }
     }
 }
