@@ -28,6 +28,7 @@ class ReceiptViewModel: ObservableObject {
             self.selectedReceipt = receipt  // ✅ Set for immediate navigation
         }
     }
+    
 
     func requestCameraPermission() {
         AVCaptureDevice.requestAccess(for: .video) { granted in
