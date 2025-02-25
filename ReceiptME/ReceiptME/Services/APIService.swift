@@ -49,6 +49,9 @@ class APIService {
         // Convert the image to JPEG data.
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
         
+        // rotate image 90 degrees clockwise
+        
+        
         let request = createAuthorizedRequest(url: url, method: "POST", contentType: "image/jpeg", body: imageData)
         
         URLSession.shared.dataTask(with: request) { data, response, error in
