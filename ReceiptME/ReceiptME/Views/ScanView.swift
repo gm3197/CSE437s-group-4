@@ -9,7 +9,9 @@ import SwiftUI
 
 struct ScanView: View {
     @State private var showImagePicker = false
+//    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var sourceType: UIImagePickerController.SourceType = .camera
+    
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
     @State private var uploadResult: ReceiptScanResult?
