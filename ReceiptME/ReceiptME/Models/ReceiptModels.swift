@@ -1,4 +1,5 @@
-//
+// COPPIED FROM JIMMY'S APPNVAIGATION (REMOTE) BRANCH -- REPLCAES BACKEND TYPES FILE
+
 //  ReceiptModels.swift
 //  ReceiptME
 //
@@ -6,6 +7,14 @@
 //
 
 import Foundation
+
+
+struct Receipt: Identifiable, Codable {
+    var id: Int
+    var merchant: String
+    var date: String
+    var total: Double
+}
 
 // MARK: - Receipt Scan Response
 struct ReceiptScanResult: Codable {

@@ -1,17 +1,12 @@
-//
-//  DashboardView.swift
-//  ReceiptME
-//
-//  Created by Jimmy Lancaster on 2/18/25.
-//
-
 import SwiftUI
+import Foundation
 
 struct DashboardView: View {
     @State private var receiptList: ReceiptList?
     @State private var isLoading = false
     @State private var errorMessage: String?
-    
+    @State private var hasFetched = false // Prevent repeated API calls
+
     var body: some View {
         NavigationView {
             Group {
@@ -38,10 +33,15 @@ struct DashboardView: View {
                 }
             }
             .navigationTitle("Dashboard")
-            .onAppear(perform: fetchReceipts)
+            .onAppear {
+                if !hasFetched { // ✅ Ensures the API is only called once
+                    fetchReceipts()
+                    hasFetched = true
+                }
+            }
         }
     }
-    
+
     func fetchReceipts() {
         isLoading = true
         APIService.shared.fetchReceipts { result in
@@ -55,11 +55,5 @@ struct DashboardView: View {
                 }
             }
         }
-    }
-}
-
-struct DashboardView_Previews: PreviewProvider {
-    static var previews: some View {
-        DashboardView()
     }
 }
