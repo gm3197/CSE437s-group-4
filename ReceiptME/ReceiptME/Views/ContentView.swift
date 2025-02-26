@@ -14,6 +14,10 @@ struct ContentView: View {
                     Image(systemName: "list.bullet.rectangle")
                     Text("Receipts")
                 }
+            SettingsView()
+                .tabItem{
+                    Text("Settings")
+                }
         }
         .accentColor(.blue) // Optional: Changes the selected tab color
     }
