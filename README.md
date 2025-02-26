@@ -8,6 +8,7 @@ Name your repository using the following format:
 - **&lt;Hank Twichell&gt;**: &lt;htwichell@wustl.edu&gt; ; &lt;hanktwichell&gt;
 - **&lt;Grayson Martin&gt;**: &lt;g.p.martin@wustl.edu&gt; ; &lt;gm3197&gt;
 - **&lt;Jimmy Lancaster&gt;**: &lt;j.j.lancaster@wustl.edu&gt; ; &lt;Jimmyl123&gt;
+- **&lt;Jake Teitelbaum&gt;**: &lt;j.teitelbaum@wustl.edu&gt; ; &lt;JakeTeitelbaum16&gt;
 
 ## TA
 &lt;Name of your group's TA&gt;
