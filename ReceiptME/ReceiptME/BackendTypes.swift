@@ -39,4 +39,13 @@ struct ReceiptItem: Codable {
 	var id: Int
 	var description: String
 	var price: Double
+  var auto: Bool // true if this receipt item was automatically added via scan, false if manually added by user
+}
+
+// Used in the following requests to create/edit a receipt item:
+// POST /receipts/<id>/items
+// PATCH /receipts/<id>/items/<item_id>
+struct ReceiptItemRequestData: Codable {
+    var description: String
+    var price: Double
 }
