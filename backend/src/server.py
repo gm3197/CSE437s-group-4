@@ -59,6 +59,35 @@ def get_receipt(receipt_id):
 
 	return receipt
 
+@bottle.post("/receipts/<receipt_id>/items")
+def add_receipt_item(receipt_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	receipt = db.get_receipt(receipt_id)
+
+	if receipt is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if receipt["owner_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	req_data = bottle.request.json
+	if req_data is None or "price" not in req_data or "description" not in req_data:
+		bottle.response.status = 400
+		return "Bad request"
+
+	item_id = db.insert_receipt_item(receipt_id, req_data["price"], req_data["description"])
+
+	bottle.response.status = 200
+	return {
+		"item_id": item_id
+	}
+
 @bottle.patch("/receipts/<receipt_id>/items/<item_id>")
 def edit_receipt_item(receipt_id, item_id):
 	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
@@ -84,6 +113,27 @@ def edit_receipt_item(receipt_id, item_id):
 
 	bottle.response.status = 200
 	return
+
+@bottle.delete("/receipts/<receipt_id>/items/<item_id>")
+def delete_receipt_item(receipt_id, item_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	receipt_item = db.get_receipt_item(receipt_id, item_id)	
+	if receipt_item is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if receipt_item["owner_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	db.delete_receipt_item(receipt_id, item_id)
+	bottle.response.status = 200
+	return
+
 
 @bottle.get("/receipts/<receipt_id>/scan.png")
 def get_receipt_img(receipt_id):
@@ -122,6 +172,10 @@ def get_receipt_item_img(receipt_id, item_id):
 
 	bbox = receipt_item["bbox"]
 
+	if bbox["left"] is None:
+		bottle.response.status = 404
+		return "Not found"
+
 	img = Image.open(f"receipts/{receipt_id}.png")
 	img_crop = img.crop((bbox["left"], bbox["top"], bbox["right"], bbox["bottom"]))
 
@@ -149,9 +203,10 @@ def add_receipt_auto():
 		model="gpt-4o-mini",
 		messages=[{
 			"role": "system",
+
 			"content": [{
 				"type": "text",
-				"text": "You will be provided with the OCR extracted text from a receipt with line numbers. Parse the text and provide the requested JSON formatted output. OCR outputs are inherently messy, so extract only the relevant information."
+				"text": "You will be provided with the OCR extracted text from a receipt with line numbers. Parse the text and provide the requested JSON formatted output. OCR outputs are inherently messy, so extract only the relevant information. For the individual receipt items, do not use information from more than one line to construct an item entry."
 			}]
 		}, {
 			"role": "user",

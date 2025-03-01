@@ -72,7 +72,7 @@ def list_receipts(user_id):
 				"id": row[0],
 				"date": row[1].__str__(),
 				"merchant": row[2],
-				"total": round(row[3], 2),
+				"total": round(row[3], 2) if row[3] is not None else 0.00,
 				"clean": row[4]
 			})
 
@@ -91,7 +91,7 @@ def get_receipt(receipt_id):
 			return None
 
 		cur.execute(
-			"SELECT id, description, price FROM receipt_items WHERE receipt_id = %s",
+			"SELECT id, description, price, bbox_left FROM receipt_items WHERE receipt_id = %s",
 			(receipt_id,)
 		)
 		items = cur.fetchall()
@@ -101,7 +101,8 @@ def get_receipt(receipt_id):
 			out_items.append({
 				"id": item[0],
 				"description": item[1],
-				"price": round(item[2], 2)
+				"price": round(item[2], 2),
+				"auto": True if item[3] is not None else False,
 			})
 
 		return {
@@ -148,7 +149,18 @@ def get_receipt_item(receipt_id, item_id):
 			}
 		}
 
+def insert_receipt_item(receipt_id, price, description):
+	with connect() as conn:
+		cur = conn.cursor()
+		cur.execute("INSERT INTO receipt_items (receipt_id, description, price) VALUES (%s, %s, %s) RETURNING id", (receipt_id, description, price))
+		return cur.fetchone()[0]
+
 def update_receipt_item(item_id, price, description):
 	with connect() as conn:
 		cur = conn.cursor()
 		cur.execute("UPDATE receipt_items SET price = %s, description = %s WHERE id = %s", (price, description, item_id))
+
+def delete_receipt_item(receipt_id, item_id):
+	with connect() as conn:
+		cur = conn.cursor()
+		cur.execute("DELETE FROM receipt_items WHERE id = %s AND receipt_id = %s", (item_id, receipt_id))
