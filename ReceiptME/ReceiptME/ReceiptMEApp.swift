@@ -14,25 +14,17 @@ import GoogleSignInSwift
 
 @main
 struct ReceiptMEApp: App {
+    @AppStorage("user_permanent_token") var backend_token: String?
+    @StateObject var viewModel = ReceiptViewModel()
     
     var body: some Scene {
         WindowGroup {
-            AuthView()
-                .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
-                } // listens for incoming URLs, used to redirect users back to app after authentication
-                .onAppear{
-                    GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-                        if let error = error {
-                            print("Google Sign-in error: \(error.localizedDescription)")
-                        } else if let user = user {
-                            print("User already signed in: \(user.profile?.email ?? "No Email")")
-                            // redirect to home page !!, bypass login
-                        }
-                        
-                    }
-                   
-                }
+            if backend_token != nil {
+                ContentView()
+                    .environmentObject(viewModel)
+            } else {
+                AuthView()
+            }
         }
         
     }

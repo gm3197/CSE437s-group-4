@@ -9,7 +9,9 @@ import SwiftUI
 
 struct ScanView: View {
     @State private var showImagePicker = false
-    @State private var sourceType: UIImagePickerController.SourceType = .camera
+    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
+//    @State private var sourceType: UIImagePickerController.SourceType = .camera
+    
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
     @State private var uploadResult: ReceiptScanResult?
@@ -101,4 +103,22 @@ struct ScanView: View {
             }
         }
     }
+    
+//    extension UIImage {
+//        func fixedOrientation() -> UIImage {
+//            // If the image is already upright, return it directly
+//            if imageOrientation == .up {
+//                return self
+//            }
+//            
+//            // Create a context to draw the correctly oriented image
+//            UIGraphicsBeginImageContextWithOptions(size, false, scale)
+//            draw(in: CGRect(origin: .zero, size: size))
+//            
+//            let normalizedImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
+//            UIGraphicsEndImageContext()
+//            
+//            return normalizedImage ?? self
+//        }
+//    }
 }
