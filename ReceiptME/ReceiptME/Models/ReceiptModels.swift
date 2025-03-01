@@ -57,6 +57,7 @@ struct ReceiptItem: Codable, Identifiable {
     var id: Int
     var description: String
     var price: Double
+    var auto: Bool // indicates if receipt item was created automatically via scan or manually by user
 }
 
 // Used in the following requests to create/edit a receipt item:
