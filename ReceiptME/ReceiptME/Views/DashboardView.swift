@@ -2,6 +2,7 @@ import SwiftUI
 import Foundation
 
 struct DashboardView: View {
+    @ObservedObject var viewModel = ReceiptViewModel()
     @State private var receiptList: ReceiptList?
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -14,7 +15,17 @@ struct DashboardView: View {
                     ProgressView("Loading receipts...")
                 } else if let receiptList = receiptList {
                     List(receiptList.receipts) { receipt in
-                        NavigationLink(destination: ReceiptDetailView(receiptId: receipt.id)) {
+                        NavigationLink(
+                            destination: ReceiptDetailView(
+                                receipt: Receipt(
+                                    id: receipt.id,
+                                    merchant: receipt.merchant,
+                                    date: receipt.date,
+                                    total: receipt.total
+                                ),
+                                viewModel: viewModel
+                            )
+                        ) {
                             VStack(alignment: .leading) {
                                 Text(receipt.merchant)
                                     .font(.headline)
@@ -34,7 +45,7 @@ struct DashboardView: View {
             }
             .navigationTitle("Dashboard")
             .onAppear {
-                if !hasFetched { // ✅ Ensures the API is only called once
+                if !hasFetched { // Ensures the API is only called once
                     fetchReceipts()
                     hasFetched = true
                 }
@@ -55,5 +66,11 @@ struct DashboardView: View {
                 }
             }
         }
+    }
+}
+
+struct DashboardView_Previews: PreviewProvider {
+    static var previews: some View {
+        DashboardView()
     }
 }

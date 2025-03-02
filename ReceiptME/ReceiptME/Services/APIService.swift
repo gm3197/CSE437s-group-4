@@ -8,6 +8,11 @@
 import Foundation
 import UIKit
 
+enum APIError: Error {
+    case invalidURL
+    case noData
+}
+
 
 class APIService {
     static let shared = APIService()
@@ -35,8 +40,7 @@ class APIService {
             return request
         }
         
-    
-    // Update this with your backend base URL.
+
     let baseURL = "https://cse437.graysonmartin.net"
     
     
@@ -119,4 +123,42 @@ class APIService {
             }
         }.resume()
     }
+    
+    func updateReceipt(_ receipt: Receipt, completion: @escaping (Result<Receipt, Error>) -> Void) {
+            guard let url = URL(string: "\(baseURL)/receipts/\(receipt.id)") else {
+                completion(.failure(APIError.invalidURL))
+                return
+            }
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            do {
+                let jsonData = try JSONEncoder().encode(receipt)
+                request.httpBody = jsonData
+            } catch {
+                completion(.failure(error))
+                return
+            }
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let data = data else {
+                    completion(.failure(APIError.noData))
+                    return
+                }
+                
+                do {
+                    let updatedReceipt = try JSONDecoder().decode(Receipt.self, from: data)
+                    completion(.success(updatedReceipt))
+                } catch {
+                    completion(.failure(error))
+                }
+            }.resume()
+        }
 }

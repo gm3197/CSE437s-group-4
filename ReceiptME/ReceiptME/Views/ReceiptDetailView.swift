@@ -1,66 +1,75 @@
-//
-//  ReceiptDetailView.swift
-//  ReceiptME
-//
-//  Created by Jimmy Lancaster on 2/18/25.
-//
-
 import SwiftUI
 
 struct ReceiptDetailView: View {
-    let receiptId: Int
-    @State private var receiptDetails: ReceiptDetails?
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    
+    @ObservedObject var viewModel: ReceiptViewModel
+    let receipt: Receipt
+
+    @State private var isEditing = false
+    @State private var editableMerchant: String
+    @State private var editableTotal: String
+
+    init(receipt: Receipt, viewModel: ReceiptViewModel) {
+        self.receipt = receipt
+        self.viewModel = viewModel
+        _editableMerchant = State(initialValue: receipt.merchant)
+        _editableTotal = State(initialValue: String(receipt.total))
+    }
+
     var body: some View {
         VStack {
-            if isLoading {
-                ProgressView("Loading details...")
-            } else if let details = receiptDetails {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Merchant: \(details.merchant.name)")
-                            .font(.headline)
-                        Text("Date: \(details.date)")
-                        Text("Payment Method: \(details.payment_method)")
-                        Text("Tax: \(String(format: "$%.2f", details.tax))")
-                        Divider()
-                        Text("Items:")
-                            .font(.headline)
-                        ForEach(details.items, id: \.id) { item in
-                            HStack {
-                                Text(item.description)
-                                Spacer()
-                                Text(String(format: "$%.2f", item.price))
-                            }
-                        }
+            if isEditing {
+                Form {
+                    Section(header: Text("Edit Receipt")) {
+                        TextField("Merchant", text: $editableMerchant)
+                        TextField("Total", text: $editableTotal)
+                            .keyboardType(.decimalPad)
+                        // Add additional fields (like date) if needed.
                     }
-                    .padding()
                 }
-            } else if let errorMessage = errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
             } else {
-                Text("No details available.")
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Merchant: \(receipt.merchant)")
+                    Text("Total: \(receipt.total, specifier: "%.2f")")
+                    Text("Date: \(receipt.date)")
+                    // Display additional fields as desired.
+                }
+                .padding()
             }
         }
-        .navigationTitle("Receipt Details")
-        .onAppear(perform: fetchReceiptDetails)
-    }
-    
-    func fetchReceiptDetails() {
-        isLoading = true
-        APIService.shared.fetchReceiptDetails(receiptId: receiptId) { result in
-            DispatchQueue.main.async {
-                isLoading = false
-                switch result {
-                case .success(let details):
-                    receiptDetails = details
-                case .failure(let error):
-                    errorMessage = error.localizedDescription
+        .navigationBarTitle("Receipt Detail", displayMode: .inline)
+        .navigationBarItems(
+            leading: isEditing ? Button(action: {
+                // Reset editable values on cancel.
+                editableMerchant = receipt.merchant
+                editableTotal = String(receipt.total)
+                isEditing = false
+            }) {
+                Text("Cancel")
+            } : nil,
+            trailing: Button(action: {
+                if isEditing {
+                    // Create an updated receipt with the new values.
+                    var updatedReceipt = receipt
+                    updatedReceipt.merchant = editableMerchant
+                    // Convert the string to Double; if conversion fails, fall back to original total.
+                    updatedReceipt.total = Double(editableTotal) ?? receipt.total
+                    viewModel.updateReceipt(updatedReceipt)
                 }
+                isEditing.toggle()
+            }) {
+                Text(isEditing ? "Save" : "Edit")
             }
+        )
+    }
+}
+
+struct ReceiptDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        // Create a dummy receipt matching your Receipt model.
+        let dummyReceipt = Receipt(id: 1, merchant: "Test Merchant", date: "2025-02-18", total: 100.0)
+        let viewModel = ReceiptViewModel()
+        NavigationView {
+            ReceiptDetailView(receipt: dummyReceipt, viewModel: viewModel)
         }
     }
 }
