@@ -10,8 +10,8 @@ import SwiftUI
 
 struct ScanView: View {
     @State private var showImagePicker = false
-    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
-//    @State private var sourceType: UIImagePickerController.SourceType = .camera
+//    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
+    @State private var sourceType: UIImagePickerController.SourceType = .camera
     
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
@@ -116,7 +116,17 @@ struct ScanView: View {
         isUploading = true
         errorMessage = nil
         
-        APIService.shared.uploadReceipt(image: image) { result in
+        let image_to_uplaod: UIImage
+        
+        // rotate pics from camera only
+        if sourceType == .camera {
+            image_to_uplaod = rotateImage(image: image, clockwise: true)
+//            image_to_uplaod = image
+        } else {
+            image_to_uplaod = image
+        }
+        
+        APIService.shared.uploadReceipt(image: image_to_uplaod) { result in
             DispatchQueue.main.async {
                 isUploading = false
                 switch result {
@@ -143,6 +153,35 @@ struct ScanView: View {
             }
         }
     }
+    
+    func rotateImage(image: UIImage, clockwise: Bool) -> UIImage {
+        // Determine the rotation angle in radians
+        let rotationAngle = clockwise ? CGFloat.pi/2 : -CGFloat.pi/2
+        
+        // Calculate the size of the rotated image
+        let size = CGSize(width: image.size.height, height: image.size.width)
+        
+        // Begin a new image context
+        UIGraphicsBeginImageContextWithOptions(size, false, image.scale)
+        let context = UIGraphicsGetCurrentContext()!
+        
+        // Move to the center of the context
+        context.translateBy(x: size.width/2, y: size.height/2)
+        
+        // Rotate the context
+        context.rotate(by: rotationAngle)
+        
+        // Draw the image centered in the context, but rotated
+        let rect = CGRect(x: -image.size.width/2, y: -image.size.height/2, width: image.size.width, height: image.size.height)
+        image.draw(in: rect)
+        
+        // Get the rotated image from the context
+        let rotatedImage = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        
+        return rotatedImage
+    }
+    
     
 //    extension UIImage {
 //        func fixedOrientation() -> UIImage {
