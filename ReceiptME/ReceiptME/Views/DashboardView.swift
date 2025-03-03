@@ -39,6 +39,10 @@ struct DashboardView: View {
                     hasFetched = true
                 }
             }
+        } // end of navigation view
+        .refreshable {
+            print("Page refreshed !!")
+            fetchReceipts()
         }
     }
 

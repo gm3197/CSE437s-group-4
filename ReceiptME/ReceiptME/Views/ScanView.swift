@@ -1,6 +1,7 @@
 //
 //  ScanView.swift
-//  ReceiptME
+//  ReceiptMEranuce
+
 //
 //  Created by Jimmy Lancaster on 2/18/25.
 //
@@ -17,8 +18,10 @@ struct ScanView: View {
     @State private var uploadResult: ReceiptScanResult?
     @State private var errorMessage: String?
     
+    @State private var navigationPath = NavigationPath() // new to swiftUI 16
+    
     var body: some View {
-        NavigationView {
+        NavigationStack(path: $navigationPath) {
             VStack {
                 if let image = selectedImage {
                     Image(uiImage: image)
@@ -63,13 +66,31 @@ struct ScanView: View {
                         }
                     }
                     .padding()
+//                    .opacity(uploadResult?.success == false ? 0 : 1) // hides button upon failure (opacity is a conditional modifier while .hidden() is NOT)
                 }
                 
+//                if let uploadResult = uploadResult {
+//                                    Text(uploadResult.success ? "Upload successful! Receipt ID: \(uploadResult.receipt_id ?? 0)" : "Upload failed.")
+//                                        .foregroundColor(uploadResult.success ? .green : .red)
+//                                        .padding()
+//                                }
                 if let uploadResult = uploadResult {
-                    Text(uploadResult.success ? "Upload successful! Receipt ID: \(uploadResult.receipt_id ?? 0)" : "Upload failed.")
-                        .foregroundColor(uploadResult.success ? .green : .red)
-                        .padding()
+                    Group {
+                        if uploadResult.success {
+//                            ReceiptDetailView(receiptId: uploadResult.receipt_id ?? 0)
+                            Text("Successful upload! Navigate to receipt page to find your itemized information.")
+                                .foregroundColor(.green)
+                                .padding()
+                        } else {
+                            
+                            Text("Upload Failed. Please retake picture and try again.")
+                                .foregroundColor(.red)
+                                .padding()
+                        }
+                    }
                 }
+//                
+                
                 
                 if let errorMessage = errorMessage {
                     Text(errorMessage)
@@ -79,9 +100,13 @@ struct ScanView: View {
                 
                 Spacer()
             }
+            .navigationDestination(for: Int.self){
+                receiptId in ReceiptDetailView(receiptId: receiptId)
+            }
             .navigationTitle("Scan Receipt")
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
+                    
             }
         }
     }
@@ -97,8 +122,23 @@ struct ScanView: View {
                 switch result {
                 case .success(let response):
                     uploadResult = response
+                    
+                    // navigation logic
+                    if response.success, let receipt_id = response.receipt_id {
+                        navigationPath.append(receipt_id)
+                    }
+                    
+                    print("Sucessful upload -- moving view to reciept details")
                 case .failure(let error):
                     errorMessage = error.localizedDescription
+                    print("Error: \(error)")
+                    
+                    if let urlError = error as? URLError {
+                        print("URL Error: \(urlError)")
+                    } else if let decodingError = error as? DecodingError {
+                        print("Decoding Error: \(decodingError)")
+                    }
+                    
                 }
             }
         }
