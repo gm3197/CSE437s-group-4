@@ -43,7 +43,7 @@ struct ReceiptDetailWrapper: View {
                 }
             } else if let receipt = receipt {
                 // Success state - pass data to the detail view
-                ReceiptDetailView(receipt: receipt, viewModel: viewModel)
+                ReceiptDetailView(viewModel: viewModel, receipt: receipt)
             } else {
                 // Not found state
                 VStack {

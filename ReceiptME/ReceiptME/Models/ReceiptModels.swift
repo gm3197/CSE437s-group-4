@@ -1,42 +1,40 @@
-// COPPIED FROM JIMMY'S APPNVAIGATION (REMOTE) BRANCH -- REPLCAES BACKEND TYPES FILE
-
+//
 //  ReceiptModels.swift
 //  ReceiptME
 //
-//  Created by Jimmy Lancaster on 2/18/25.
+//  Created by [Your Name] on [Date]
 //
 
 import Foundation
 
-
-struct Receipt: Identifiable, Codable {
-    var id: Int
-    var merchant: String
-    var date: String
-    var total: Double
-}
-
-// MARK: - Receipt Scan Response
-struct ReceiptScanResult: Codable {
-    var success: Bool
-    var receipt_id: Int? // present if success == true
-}
-
-// MARK: - Receipt List
+// MARK: - Basic Receipt List
 struct ReceiptList: Codable {
     var receipts: [ReceiptPreview]
 }
 
-struct ReceiptPreview: Codable, Identifiable {
+struct ReceiptPreview: Codable {
     var id: Int
-    var date: String
     var merchant: String
+    var date: String
     var total: Double
-    var clean: Bool
 }
 
-// MARK: - Receipt Details
-struct ReceiptDetails: Codable {
+// MARK: - For Scan/Upload
+struct ReceiptScanResult: Codable {
+    let success: Bool
+    let receipt_id: Int?
+}
+
+// MARK: - Core Receipt (simpler representation, if needed)
+struct Receipt: Codable, Identifiable {
+    var id: Int
+    var merchant: String
+    var date: String
+    var total: Double
+}
+
+// MARK: - Detailed Receipt
+struct ReceiptDetails: Codable, Identifiable {
     var id: Int
     var owner_id: Int
     var clean: Bool
@@ -48,22 +46,30 @@ struct ReceiptDetails: Codable {
 }
 
 struct Merchant: Codable {
+    var id: Int?
     var name: String
-    var address: String
-    var domain: String
 }
 
 struct ReceiptItem: Codable, Identifiable {
-    var id: Int
+    // This id is generated locally and won't be decoded from the JSON.
+    var id: UUID = UUID()
     var description: String
     var price: Double
-    var auto: Bool // indicates if receipt item was created automatically via scan or manually by user
-}
 
-// Used in the following requests to create/edit a receipt item:
-// POST /receipts/<id>/items
-// PATCH /receipts/<id>/items/<item_id>
-struct ReceiptItemRequestData: Codable {
-    var description: String
-    var price: Double
+    private enum CodingKeys: String, CodingKey {
+        case description, price
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        // Decode name as optional; if missing, use "Unknown Item"
+        self.description = try container.decodeIfPresent(String.self, forKey: .description) ?? "Unknown Item"
+        self.price = try container.decode(Double.self, forKey: .price)
+    }
+    
+    // Standard initializer for convenience.
+    init(description: String, price: Double) {
+        self.description = description
+        self.price = price
+    }
 }
