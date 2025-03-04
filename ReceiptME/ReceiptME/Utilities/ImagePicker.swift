@@ -29,7 +29,7 @@ struct ImagePicker: UIViewControllerRepresentable {
     
     @Environment(\.presentationMode) var presentationMode
     @Binding var selectedImage: UIImage?
-    var sourceType: UIImagePickerController.SourceType = .camera
+    var sourceType: UIImagePickerController.SourceType// = .camera
     
     func makeCoordinator() -> Coordinator {
         return Coordinator(self)

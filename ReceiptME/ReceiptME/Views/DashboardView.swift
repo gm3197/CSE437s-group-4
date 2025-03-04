@@ -4,9 +4,11 @@ import Foundation
 struct DashboardView: View {
     @ObservedObject var viewModel = ReceiptViewModel()
     
+    @AppStorage("fetch_receipts") var hasFetched: Bool?
+    
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var hasFetched = false // Prevent repeated API calls
+//    @State private var hasFetched = false // Prevent repeated API calls
     
     var body: some View {
         NavigationView {
@@ -83,7 +85,7 @@ struct DashboardView: View {
             }
             .navigationTitle("Dashboard")
             .onAppear {
-                if !hasFetched {
+                if hasFetched != true { // false or null
                     fetchReceipts()
                     hasFetched = true
                 }
