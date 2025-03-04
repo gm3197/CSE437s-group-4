@@ -120,6 +120,11 @@ def get_receipt(receipt_id):
 			"tax": receipt[7]
 		}
 
+def update_receipt(id, merchant, date):
+	with connect() as conn:
+		cur = conn.cursor()
+		cur.execute("UPDATE receipts SET merchant = %s, date = %s WHERE id = %s", (merchant, date, id))
+
 def get_receipt_item(receipt_id, item_id):
 	with connect() as conn:
 		cur = conn.cursor()
