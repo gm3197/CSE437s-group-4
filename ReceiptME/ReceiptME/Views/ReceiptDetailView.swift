@@ -81,4 +81,5 @@ struct ReceiptDetailView: View {
             }
         )
     }
+    
 }
