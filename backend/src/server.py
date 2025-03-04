@@ -86,6 +86,28 @@ def update_receipt(receipt_id):
 	bottle.response.status = 200
 	return ""
 
+@bottle.delete("/receipts/<receipt_id>")
+def delete_receipt(receipt_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	receipt = db.get_receipt(receipt_id)
+
+	if receipt is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if receipt["owner_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	db.delete_receipt(receipt_id)
+
+	bottle.response.status = 200
+	return
+
 @bottle.post("/receipts/<receipt_id>/items")
 def add_receipt_item(receipt_id):
 	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
