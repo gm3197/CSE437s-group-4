@@ -7,12 +7,30 @@ struct ReceiptDetailView: View {
     @State private var isEditing = false
     @State private var editableMerchant: String
     @State private var editableTotal: String
+    @State private var editableDate: Date
+
+    // A simple DateFormatter. Modify the dateStyle/timeStyle
+    // (or use a custom format) as needed to match your app.
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }()
 
     init(receipt: Receipt, viewModel: ReceiptViewModel) {
         self.receipt = receipt
         self.viewModel = viewModel
+
+        // Initialize the text fields
         _editableMerchant = State(initialValue: receipt.merchant)
         _editableTotal = State(initialValue: String(receipt.total))
+
+        // Attempt to parse the date string; if it fails, use the current date.
+        if let parsedDate = dateFormatter.date(from: receipt.date) {
+            _editableDate = State(initialValue: parsedDate)
+        } else {
+            _editableDate = State(initialValue: Date())
+        }
     }
 
     var body: some View {
@@ -21,9 +39,8 @@ struct ReceiptDetailView: View {
                 Form {
                     Section(header: Text("Edit Receipt")) {
                         TextField("Merchant", text: $editableMerchant)
-                        TextField("Total", text: $editableTotal)
-                            .keyboardType(.decimalPad)
-                        // Add additional fields (like date) if needed.
+                        // Add the DatePicker
+                        DatePicker("Date", selection: $editableDate, displayedComponents: .date)
                     }
                 }
             } else {
@@ -31,7 +48,6 @@ struct ReceiptDetailView: View {
                     Text("Merchant: \(receipt.merchant)")
                     Text("Total: \(receipt.total, specifier: "%.2f")")
                     Text("Date: \(receipt.date)")
-                    // Display additional fields as desired.
                 }
                 .padding()
             }
@@ -39,20 +55,24 @@ struct ReceiptDetailView: View {
         .navigationBarTitle("Receipt Detail", displayMode: .inline)
         .navigationBarItems(
             leading: isEditing ? Button(action: {
-                // Reset editable values on cancel.
+                // Reset editable values on cancel
                 editableMerchant = receipt.merchant
                 editableTotal = String(receipt.total)
+                if let parsedDate = dateFormatter.date(from: receipt.date) {
+                    editableDate = parsedDate
+                }
                 isEditing = false
             }) {
                 Text("Cancel")
             } : nil,
             trailing: Button(action: {
                 if isEditing {
-                    // Create an updated receipt with the new values.
+                    // Create an updated receipt with the new values
                     var updatedReceipt = receipt
                     updatedReceipt.merchant = editableMerchant
-                    // Convert the string to Double; if conversion fails, fall back to original total.
-                    updatedReceipt.total = Double(editableTotal) ?? receipt.total
+                    // Convert the selected Date to a string
+                    updatedReceipt.date = dateFormatter.string(from: editableDate)
+                    
                     viewModel.updateReceipt(updatedReceipt)
                 }
                 isEditing.toggle()
@@ -60,16 +80,5 @@ struct ReceiptDetailView: View {
                 Text(isEditing ? "Save" : "Edit")
             }
         )
-    }
-}
-
-struct ReceiptDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        // Create a dummy receipt matching your Receipt model.
-        let dummyReceipt = Receipt(id: 1, merchant: "Test Merchant", date: "2025-02-18", total: 100.0)
-        let viewModel = ReceiptViewModel()
-        NavigationView {
-            ReceiptDetailView(receipt: dummyReceipt, viewModel: viewModel)
-        }
     }
 }
