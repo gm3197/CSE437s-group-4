@@ -95,7 +95,7 @@ struct ScanView: View {
                 Spacer()
             }
             .navigationDestination(for: Int.self){
-                receiptId in ReceiptDetailView(receiptId: receiptId)
+                receiptId in ReceiptDetailWrapper(receiptId: receiptId)
             }
             .navigationTitle("Scan Receipt")
             .sheet(isPresented: $showImagePicker) {
