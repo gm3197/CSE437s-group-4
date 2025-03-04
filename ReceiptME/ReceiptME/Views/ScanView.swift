@@ -10,8 +10,8 @@ import SwiftUI
 
 struct ScanView: View {
     @State private var showImagePicker = false
-//    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
-    @State private var sourceType: UIImagePickerController.SourceType = .camera
+    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
+//    @State private var sourceType: UIImagePickerController.SourceType = .camera
     
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
@@ -66,14 +66,9 @@ struct ScanView: View {
                         }
                     }
                     .padding()
-//                    .opacity(uploadResult?.success == false ? 0 : 1) // hides button upon failure (opacity is a conditional modifier while .hidden() is NOT)
                 }
                 
-//                if let uploadResult = uploadResult {
-//                                    Text(uploadResult.success ? "Upload successful! Receipt ID: \(uploadResult.receipt_id ?? 0)" : "Upload failed.")
-//                                        .foregroundColor(uploadResult.success ? .green : .red)
-//                                        .padding()
-//                                }
+
                 if let uploadResult = uploadResult {
                     Group {
                         if uploadResult.success {
@@ -88,8 +83,7 @@ struct ScanView: View {
                                 .padding()
                         }
                     }
-                }
-//                
+                }               
                 
                 
                 if let errorMessage = errorMessage {
@@ -120,8 +114,8 @@ struct ScanView: View {
         
         // rotate pics from camera only
         if sourceType == .camera {
-            image_to_uplaod = rotateImage(image: image, clockwise: true)
-//            image_to_uplaod = image
+//            image_to_uplaod = rotateImage(image: image, clockwise: true)
+            image_to_uplaod = image
         } else {
             image_to_uplaod = image
         }
