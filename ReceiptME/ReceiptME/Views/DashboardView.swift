@@ -11,75 +11,8 @@ struct DashboardView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // 1) Background gradient
-                LinearGradient(
-                    gradient: Gradient(colors: [.pink, .purple, .blue]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                // 2) Main content
-                Group {
-                    if isLoading {
-                        ProgressView("Loading receipts...")
-                            .font(.system(.title3, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
-                    } else if !viewModel.receipts.isEmpty {
-                        // Use a List with hidden scroll background
-                        List {
-                            ForEach(viewModel.receipts) { receipt in
-                                NavigationLink(
-                                    destination: ReceiptDetailView(
-                                        receipt: receipt,
-                                        viewModel: viewModel
-                                    )
-                                ) {
-                                    // 3) Row style
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(receipt.merchant)
-                                            .font(.system(.headline, design: .rounded))
-                                        Text(receipt.date)
-                                            .font(.system(.subheadline, design: .rounded))
-                                        Text(String(format: "$%.2f", receipt.total))
-                                            .font(.system(.subheadline, design: .rounded))
-                                    }
-                                    .padding(.vertical, 8)
-                                }
-                                .listRowBackground(Color.white.opacity(0.15))
-                                .cornerRadius(10)
-                                .shadow(color: .black.opacity(0.1), radius: 2, x: 1, y: 2)
-                            }
-                            .onDelete(perform: deleteItems)
-                        }
-                        .refreshable {
-                            print("Page refreshed !!")
-                            fetchReceipts()
-                        }
-                        // iOS 16+ only: hide default List background so gradient shows through
-                        .scrollContentBackground(.hidden)
-                    } else if let errorMessage = errorMessage {
-                        Text(errorMessage)
-                            .font(.system(.title3, design: .rounded))
-                            .foregroundColor(.red)
-                            .padding()
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
-                    } else {
-                        Text("No receipts available.")
-                            .font(.system(.title3, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
-                    }
-                }
+                backgroundGradient
+                contentView
             }
             .navigationTitle("Dashboard")
             .onAppear {
@@ -88,11 +21,108 @@ struct DashboardView: View {
                     hasFetched = true
                 }
             }
-        } // end of NavigationView
-        
+        }
+        .refreshable {
+            fetchReceipts()
+        }
     }
     
-    // MARK: - Delete Items (swipe-to-delete)
+    // MARK: - Background Gradient
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [.pink, .purple, .blue]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    }
+    
+    // MARK: - Main Content
+    @ViewBuilder
+    private var contentView: some View {
+        if isLoading {
+            loadingView
+        } else if let errorMessage = errorMessage {
+            errorView(message: errorMessage)
+        } else if !viewModel.receipts.isEmpty {
+            listView
+        } else {
+            emptyView
+        }
+    }
+    
+    // MARK: - Loading View
+    private var loadingView: some View {
+        ProgressView("Loading receipts...")
+            .font(.system(.title3, design: .rounded))
+            .foregroundColor(.white)
+            .padding()
+            .background(Color.white.opacity(0.2))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
+    }
+    
+    // MARK: - Error View
+    private func errorView(message: String) -> some View {
+        Text(message)
+            .font(.system(.title3, design: .rounded))
+            .foregroundColor(.red)
+            .padding()
+            .background(Color.white.opacity(0.2))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
+    }
+    
+    // MARK: - Empty View
+    private var emptyView: some View {
+        Text("No receipts available.")
+            .font(.system(.title3, design: .rounded))
+            .foregroundColor(.white)
+            .padding()
+            .background(Color.white.opacity(0.2))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
+    }
+    
+    // MARK: - List View
+    private var listView: some View {
+        List {
+            ForEach(viewModel.receipts) { receipt in
+                NavigationLink(
+                    destination: ReceiptDetailView(viewModel: viewModel, receipt: receipt)
+                ) {
+                    ReceiptRow(receipt: receipt)
+                }
+                .listRowBackground(Color.white.opacity(0.15))
+                .cornerRadius(10)
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 1, y: 2)
+            }
+            .onDelete(perform: deleteItems)
+        }
+        .refreshable {
+            print("Page refreshed !!")
+            fetchReceipts()
+        }
+        .scrollContentBackground(.hidden) // iOS 16+ to let the gradient show through
+    }
+    
+    // MARK: - Receipt Row Subview
+    private struct ReceiptRow: View {
+        let receipt: Receipt
+        var body: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(receipt.merchant)
+                    .font(.system(.headline, design: .rounded))
+                Text(receipt.date)
+                    .font(.system(.subheadline, design: .rounded))
+                Text(String(format: "$%.2f", receipt.total))
+                    .font(.system(.subheadline, design: .rounded))
+            }
+            .padding(.vertical, 8)
+        }
+    }
+    
+    // MARK: - Delete Items
     private func deleteItems(at offsets: IndexSet) {
         for index in offsets {
             let receiptToDelete = viewModel.receipts[index]
@@ -100,11 +130,10 @@ struct DashboardView: View {
         }
         // If you want rows to vanish immediately, uncomment:
         // viewModel.receipts.remove(atOffsets: offsets)
-        // Then remove the local deletion in deleteReceipt(_:) in the ViewModel.
     }
     
     // MARK: - Fetch Receipts
-    func fetchReceipts() {
+    private func fetchReceipts() {
         isLoading = true
         APIService.shared.fetchReceipts { result in
             DispatchQueue.main.async {
@@ -113,10 +142,12 @@ struct DashboardView: View {
                 case .success(let list):
                     // Convert [ReceiptPreview] -> [Receipt]
                     viewModel.receipts = list.receipts.map { preview in
-                        Receipt(id: preview.id,
-                                merchant: preview.merchant,
-                                date: preview.date,
-                                total: preview.total)
+                        Receipt(
+                            id: preview.id,
+                            merchant: preview.merchant,
+                            date: preview.date,
+                            total: preview.total
+                        )
                     }
                 case .failure(let error):
                     errorMessage = error.localizedDescription
