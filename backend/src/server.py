@@ -8,6 +8,7 @@ from openai import OpenAI
 import json
 import io
 import os
+import datetime
 
 openai_client = OpenAI()
 
@@ -278,7 +279,7 @@ def add_receipt_auto():
 						},
 						"date": {
 							"type": "string",
-							"description": "The date on the receipt, in the format MM-DD-YYYY"
+							"description": f"The date on the receipt, in the format MM-DD-YYYY. If no date is available, use \"{datetime.datetime.today().strftime('%m-%d-%Y')}\""
 						},
 						"merchant_address": {
 							"type": "string",
