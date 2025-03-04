@@ -17,6 +17,7 @@ struct AuthView: View {
     @State private var isAuthenticated = false      // to redirect to home page
 
     @AppStorage("user_permanent_token") var backend_token: String?
+    @AppStorage("user_email") var email_: String?
 
     var body: some View {
         Group {
@@ -97,6 +98,9 @@ extension AuthView {
             print("Email: \(userEmail)")
             print("Name: \(userName)")
 
+            // assign email for access in settings
+            email_ = userEmail
+            
             // Access ID token for backend
             result.user.refreshTokensIfNeeded { refreshedUser, error in
                 guard let refreshedUser = refreshedUser, error == nil,

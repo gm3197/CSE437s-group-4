@@ -17,5 +17,7 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>650383131525-anbr9ft0hfl03jbhbl21sokpgchc12tg.apps.googleusercontent.com</string>
+	<key>NSCameraPortraitEffectEnabled</key>
+	<false/>
 </dict>
 </plist>
