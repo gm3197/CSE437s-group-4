@@ -2,7 +2,7 @@
 //  APIService.swift
 //  ReceiptME
 //
-//  Created by Jimmy Lancaster on 2/18/25.
+//  Created by Jimmy Lancaster on 2/18/25
 //
 
 import Foundation
@@ -13,38 +13,40 @@ enum APIError: Error {
     case noData
 }
 
-
 class APIService {
     static let shared = APIService()
     private init() {}
     
-    func createAuthorizedRequest(url: URL, method: String = "POST", contentType: String? = nil, body: Data? = nil) -> URLRequest {
-            var request = URLRequest(url: url)
-            
-            // Set Authorization header with stored token
-            if let token = UserDefaults.standard.string(forKey: "user_permanent_token") {
-                request.setValue(token, forHTTPHeaderField: "Authorization")
-            }
-            
-            // Set HTTP method (default is POST)
-            request.httpMethod = method
-            
-            // Set Content-Type header if provided
-            if let contentType = contentType {
-                request.setValue(contentType, forHTTPHeaderField: "Content-Type")
-            }
-            
-            // Set HTTP body if provided
-            request.httpBody = body
-            
-            return request
+    // MARK: - Helper: Create Authorized Request
+    func createAuthorizedRequest(url: URL,
+                                 method: String = "POST",
+                                 contentType: String? = nil,
+                                 body: Data? = nil) -> URLRequest {
+        var request = URLRequest(url: url)
+        
+        // Set Authorization header with stored token
+        if let token = UserDefaults.standard.string(forKey: "user_permanent_token") {
+            request.setValue(token, forHTTPHeaderField: "Authorization")
         }
         
-
+        // Set HTTP method (default is POST)
+        request.httpMethod = method
+        
+        // Set Content-Type header if provided
+        if let contentType = contentType {
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        }
+        
+        // Set HTTP body if provided
+        request.httpBody = body
+        
+        return request
+    }
+    
+    // MARK: - Base URL
     let baseURL = "https://cse437.graysonmartin.net"
     
-    
-    // Upload receipt image (JPG) to /receipts/auto
+    // MARK: - Upload Receipt Image
     func uploadReceipt(image: UIImage, completion: @escaping (Result<ReceiptScanResult, Error>) -> Void) {
         guard let url = URL(string: "\(baseURL)/receipts/auto") else {
             return
@@ -53,10 +55,10 @@ class APIService {
         // Convert the image to JPEG data.
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
         
-        // rotate image 90 degrees clockwise
-        
-        
-        let request = createAuthorizedRequest(url: url, method: "POST", contentType: "image/jpeg", body: imageData)
+        let request = createAuthorizedRequest(url: url,
+                                              method: "POST",
+                                              contentType: "image/jpeg",
+                                              body: imageData)
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -75,14 +77,15 @@ class APIService {
         }.resume()
     }
     
-    // Fetch all receipts from /receipts
+    // MARK: - Fetch All Receipts (Preview)
     func fetchReceipts(completion: @escaping (Result<ReceiptList, Error>) -> Void) {
-        
         guard let url = URL(string: "\(baseURL)/receipts") else {
             return
         }
         
-        let request = createAuthorizedRequest(url: url, method: "GET", contentType: "application/json")
+        let request = createAuthorizedRequest(url: url,
+                                              method: "GET",
+                                              contentType: "application/json")
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -100,52 +103,19 @@ class APIService {
         }.resume()
     }
     
-    // Fetch receipt details from /receipts/<id>
+    // MARK: - Fetch Basic Receipt by ID (Preview)
+    //   (If you need a simpler version that only returns the basic `Receipt` data.)
     func fetchReceiptDetails(receiptId: Int, completion: @escaping (Result<ReceiptDetails, Error>) -> Void) {
+        // We'll assume GET /receipts/<id> returns the full, detailed ReceiptDetails.
         guard let url = URL(string: "\(baseURL)/receipts/\(receiptId)") else {
-            return
-        }
-        
-        let request = createAuthorizedRequest(url: url, method: "GET", contentType: "application/json")
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            guard let data = data else { return }
-            
-            do {
-                let details = try JSONDecoder().decode(ReceiptDetails.self, from: data)
-                completion(.success(details))
-            } catch {
-                completion(.failure(error))
-            }
-        }.resume()
-    }
-    
-    func updateReceipt(_ receipt: Receipt, completion: @escaping (Result<Receipt, Error>) -> Void) {
-        guard let url = URL(string: "\(baseURL)/receipts/\(receipt.id)") else {
             completion(.failure(APIError.invalidURL))
             return
         }
         
-        // Encode the receipt to JSON
-        let jsonData: Data
-        do {
-            jsonData = try JSONEncoder().encode(receipt)
-        } catch {
-            completion(.failure(error))
-            return
-        }
-        
-        // Create the authorized request for PATCH
         let request = createAuthorizedRequest(url: url,
-                                              method: "PATCH",
-                                              contentType: "application/json",
-                                              body: jsonData)
+                                              method: "GET",
+                                              contentType: "application/json")
         
-        // Perform the network call
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
@@ -158,29 +128,105 @@ class APIService {
             }
             
             do {
-                let updatedReceipt = try JSONDecoder().decode(Receipt.self, from: data)
-                completion(.success(updatedReceipt))
+                let details = try JSONDecoder().decode(ReceiptDetails.self, from: data)
+                completion(.success(details))
             } catch {
                 completion(.failure(error))
             }
         }.resume()
     }
+    
+    // MARK: - Update Basic Receipt (Preview)
+    func updateReceipt(_ receipt: Receipt, completion: @escaping (Result<Receipt, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/receipts/\(receipt.id)") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        do {
+            let jsonData = try JSONEncoder().encode(receipt)
+            let request = createAuthorizedRequest(url: url,
+                                                  method: "PATCH",
+                                                  contentType: "application/json",
+                                                  body: jsonData)
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let data = data else {
+                    completion(.failure(APIError.noData))
+                    return
+                }
+                
+                do {
+                    let updatedReceipt = try JSONDecoder().decode(Receipt.self, from: data)
+                    completion(.success(updatedReceipt))
+                } catch {
+                    completion(.failure(error))
+                }
+            }.resume()
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    
+    // MARK: - Update Detailed Receipt
+    /// Updates all fields in `ReceiptDetails`, including items, payment_method, merchant name, tax, etc.
+    func updateReceiptDetails(_ details: ReceiptDetails, completion: @escaping (Result<ReceiptDetails, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/receipts/\(details.id)") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        do {
+            let jsonData = try JSONEncoder().encode(details)
+            let request = createAuthorizedRequest(url: url,
+                                                  method: "PATCH",
+                                                  contentType: "application/json",
+                                                  body: jsonData)
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let data = data else {
+                    completion(.failure(APIError.noData))
+                    return
+                }
+                
+                do {
+                    let updatedDetails = try JSONDecoder().decode(ReceiptDetails.self, from: data)
+                    completion(.success(updatedDetails))
+                } catch {
+                    completion(.failure(error))
+                }
+            }.resume()
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    
+    // MARK: - Delete Receipt
     func deleteReceipt(receiptId: Int, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let url = URL(string: "\(baseURL)/receipts/\(receiptId)") else {
             completion(.failure(APIError.invalidURL))
             return
         }
-
-        // Create an authorized DELETE request
-        let request = createAuthorizedRequest(url: url, method: "DELETE")
-
+        
+        let request = createAuthorizedRequest(url: url,
+                                              method: "DELETE")
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
-            
-            // You might optionally check the response code to confirm success, e.g. 200..299
+            // Optionally check for a non-2xx HTTP status code here.
             completion(.success(()))
         }.resume()
     }
