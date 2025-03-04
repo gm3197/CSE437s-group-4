@@ -15,6 +15,7 @@ struct ScanView: View {
     
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
+    @State private var isUploadButtonHidden = false
     @State private var uploadResult: ReceiptScanResult?
     @State private var errorMessage: String?
     
@@ -43,6 +44,9 @@ struct ScanView: View {
                     Button(action: {
                         sourceType = .camera
                         showImagePicker = true
+                        isUploadButtonHidden = false
+                        uploadResult = nil
+                        errorMessage = nil
                     }) {
                         Text("Camera")
                     }
@@ -51,13 +55,16 @@ struct ScanView: View {
                     Button(action: {
                         sourceType = .photoLibrary
                         showImagePicker = true
+                        isUploadButtonHidden = false
+                        uploadResult = nil
+                        errorMessage = nil
                     }) {
                         Text("Photo Library")
                     }
                     .padding()
                 }
                 
-                if selectedImage != nil {
+                if selectedImage != nil && !isUploadButtonHidden {
                     Button(action: uploadReceipt) {
                         if isUploading {
                             ProgressView()
@@ -109,6 +116,8 @@ struct ScanView: View {
         guard let image = selectedImage else { return }
         isUploading = true
         errorMessage = nil
+        
+        isUploadButtonHidden = true // hide button so users cant double upload (avoiding bugs)
         
         let image_to_uplaod: UIImage
         

@@ -16,6 +16,7 @@ struct ContentView: View {
                 }
             SettingsView()
                 .tabItem{
+                    Image(systemName: "gearshape.fill")
                     Text("Settings")
                 }
         }
