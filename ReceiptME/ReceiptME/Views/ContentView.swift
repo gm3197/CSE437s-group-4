@@ -8,22 +8,23 @@ struct ContentView: View {
                     Image(systemName: "camera.fill")
                     Text("Scan")
                 }
-
+            
             DashboardView()
                 .tabItem {
                     Image(systemName: "list.bullet.rectangle")
                     Text("Receipts")
                 }
+            
             SettingsView()
-                .tabItem{
+                .tabItem {
                     Image(systemName: "gearshape.fill")
                     Text("Settings")
                 }
         }
-        .accentColor(.blue) // Optional: Changes the selected tab color
+        // Make the tab bar icons stand out
+        .tint(.white)
+        // Give the tab bar a translucent background or color
+        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
-}
-
-#Preview {
-    ContentView()
 }

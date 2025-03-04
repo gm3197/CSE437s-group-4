@@ -1,161 +1,189 @@
-//
-//  ScanView.swift
-//  ReceiptMEranuce
-
-//
-//  Created by Jimmy Lancaster on 2/18/25.
-//
-
 import SwiftUI
 
 struct ScanView: View {
     @State private var showImagePicker = false
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
-//    @State private var sourceType: UIImagePickerController.SourceType = .camera
-    
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
     @State private var isUploadButtonHidden = false
     @State private var uploadResult: ReceiptScanResult?
     @State private var errorMessage: String?
     
-    @State private var navigationPath = NavigationPath() // new to swiftUI 16
+    @State private var navigationPath = NavigationPath()
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            VStack {
-                if let image = selectedImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 300)
-                        .cornerRadius(10)
-                        .padding()
-                } else {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 300)
-                        .overlay(Text("No image selected").foregroundColor(.gray))
-                        .cornerRadius(10)
-                        .padding()
-                }
+            ZStack {
+                // 1) Background Gradient
+                LinearGradient(
+                    gradient: Gradient(colors: [.pink, .purple, .blue]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
-                HStack {
-                    Button(action: {
-                        sourceType = .camera
-                        showImagePicker = true
-                        isUploadButtonHidden = false
-                        uploadResult = nil
-                        errorMessage = nil
-                    }) {
-                        Text("Camera")
-                    }
-                    .padding()
-                    
-                    Button(action: {
-                        sourceType = .photoLibrary
-                        showImagePicker = true
-                        isUploadButtonHidden = false
-                        uploadResult = nil
-                        errorMessage = nil
-                    }) {
-                        Text("Photo Library")
-                    }
-                    .padding()
-                }
-                
-                if selectedImage != nil && !isUploadButtonHidden {
-                    Button(action: uploadReceipt) {
-                        if isUploading {
-                            ProgressView()
-                        } else {
-                            Text("Upload Receipt")
-                        }
-                    }
-                    .padding()
-                }
-                
-
-                if let uploadResult = uploadResult {
-                    Group {
-                        if uploadResult.success {
-//                            ReceiptDetailView(receiptId: uploadResult.receipt_id ?? 0)
-                            Text("Successful upload! Navigate to receipt page to find your itemized information.")
-                                .foregroundColor(.green)
-                                .padding()
-                        } else {
+                // 2) Main scrollable container
+                ScrollView {
+                    VStack(spacing: 20) {
+                        
+                        Text("Scan Your Receipt")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.25), radius: 3, x: 2, y: 2)
+                            .padding(.top, 30)
+                        
+                        // 3) Image or Placeholder Container
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.15))
+                                .frame(height: 300)
+                                .shadow(color: .black.opacity(0.15), radius: 5, x: 2, y: 4)
                             
-                            Text("Upload Failed. Please retake picture and try again.")
-                                .foregroundColor(.red)
-                                .padding()
+                            if let image = selectedImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .cornerRadius(16)
+                                    .padding()
+                            } else {
+                                Text("No image selected")
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
                         }
-                    }
-                }               
-                
-                
-                if let errorMessage = errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                }
-                
-                Spacer()
-            }
-            .navigationDestination(for: Int.self){
-                receiptId in ReceiptDetailWrapper(receiptId: receiptId)
+                        .padding(.horizontal, 20)
+                        
+                        // 4) Buttons Row (Camera / Photo Library)
+                        HStack(spacing: 20) {
+                            Button(action: {
+                                sourceType = .camera
+                                showImagePicker = true
+                                isUploadButtonHidden = false
+                                uploadResult = nil
+                                errorMessage = nil
+                            }) {
+                                Text("Camera")
+                                    .font(.system(.headline, design: .rounded))
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(SleekButtonStyle())
+                            
+                            Button(action: {
+                                sourceType = .photoLibrary
+                                showImagePicker = true
+                                isUploadButtonHidden = false
+                                uploadResult = nil
+                                errorMessage = nil
+                            }) {
+                                Text("Photo Library")
+                                    .font(.system(.headline, design: .rounded))
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(SleekButtonStyle())
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // 5) Upload Button
+                        if selectedImage != nil && !isUploadButtonHidden {
+                            Button(action: uploadReceipt) {
+                                if isUploading {
+                                    ProgressView()
+                                } else {
+                                    Text("Upload Receipt")
+                                        .font(.system(.headline, design: .rounded))
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .buttonStyle(SleekButtonStyle())
+                            .padding(.horizontal, 20)
+                        }
+                        
+                        // 6) Success / Error Messaging
+                        if let uploadResult = uploadResult {
+                            Group {
+                                if uploadResult.success {
+                                    Text("Successful upload! Navigate to receipt page to find your itemized information.")
+                                        .foregroundColor(.green)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, 20)
+                                } else {
+                                    Text("Upload Failed. Please retake picture and try again.")
+                                        .foregroundColor(.red)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, 20)
+                                }
+                            }
+                        }
+                        
+                        if let errorMessage = errorMessage {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                        }
+                        
+                        Spacer(minLength: 30)
+                    } // end of VStack
+                } // end of ScrollView
             }
             .navigationTitle("Scan Receipt")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: Int.self) { receiptId in
+                ReceiptDetailWrapper(receiptId: receiptId)
+            }
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
-                    
             }
-        }
+        } // end NavigationStack
     }
     
+    // MARK: - Upload Logic
     func uploadReceipt() {
         guard let image = selectedImage else { return }
         isUploading = true
         errorMessage = nil
+        isUploadButtonHidden = true // hide button so users cant double upload
         
-        isUploadButtonHidden = true // hide button so users cant double upload (avoiding bugs)
+        // If you want rotation or image fixes, do that here
+        let imageToUpload = image
         
-        let image_to_uplaod: UIImage
-        
-        // rotate pics from camera only
-        if sourceType == .camera {
-//            image_to_uplaod = rotateImage(image: image, clockwise: true)
-            image_to_uplaod = image
-        } else {
-            image_to_uplaod = image
-        }
-        
-        APIService.shared.uploadReceipt(image: image_to_uplaod) { result in
+        APIService.shared.uploadReceipt(image: imageToUpload) { result in
             DispatchQueue.main.async {
                 isUploading = false
                 switch result {
                 case .success(let response):
                     uploadResult = response
-                    
-                    // navigation logic
+                    // navigate if success
                     if response.success, let receipt_id = response.receipt_id {
                         navigationPath.append(receipt_id)
                     }
-                    
-                    print("Sucessful upload -- moving view to reciept details")
                 case .failure(let error):
                     errorMessage = error.localizedDescription
-                    print("Error: \(error)")
-                    
-                    if let urlError = error as? URLError {
-                        print("URL Error: \(urlError)")
-                    } else if let decodingError = error as? DecodingError {
-                        print("Decoding Error: \(decodingError)")
-                    }
-                    
                 }
             }
         }
     }
+}
+
+// MARK: - Sleek Reusable ButtonStyle
+/// A custom button style that gives a gradient background, rounded corners, and a shadow.
+struct SleekButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(.white)
+            .padding(.vertical, 12)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [.pink, .purple, .blue]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.25), radius: configuration.isPressed ? 2 : 4, x: 2, y: 2)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
     
     func rotateImage(image: UIImage, clockwise: Bool) -> UIImage {
         // Determine the rotation angle in radians
@@ -203,4 +231,4 @@ struct ScanView: View {
 //            return normalizedImage ?? self
 //        }
 //    }
-}
+
