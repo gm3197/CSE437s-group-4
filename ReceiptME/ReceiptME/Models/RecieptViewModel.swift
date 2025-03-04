@@ -56,4 +56,18 @@ class ReceiptViewModel: ObservableObject {
                 }
             }
         }
+    func deleteReceipt(_ receipt: Receipt) {
+           APIService.shared.deleteReceipt(receiptId: receipt.id) { [weak self] result in
+               DispatchQueue.main.async {
+                   switch result {
+                   case .success():
+                       // If successful, remove it from the local array (if not already removed)
+                       self?.receipts.removeAll { $0.id == receipt.id }
+                   case .failure(let error):
+                       // Handle error (e.g. show an alert, log error, etc.)
+                       print("Error deleting receipt: \(error)")
+                   }
+               }
+           }
+       }
 }

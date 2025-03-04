@@ -165,4 +165,23 @@ class APIService {
             }
         }.resume()
     }
+    func deleteReceipt(receiptId: Int, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/receipts/\(receiptId)") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+
+        // Create an authorized DELETE request
+        let request = createAuthorizedRequest(url: url, method: "DELETE")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            // You might optionally check the response code to confirm success, e.g. 200..299
+            completion(.success(()))
+        }.resume()
+    }
 }
