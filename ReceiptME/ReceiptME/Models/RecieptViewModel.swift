@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import AVFoundation
+import Combine
 
 class ReceiptViewModel: ObservableObject {
     @Published var receipts: [Receipt] = []
@@ -39,4 +40,20 @@ class ReceiptViewModel: ObservableObject {
             }
         }
     }
+    // This method calls the API service to update a receipt.
+    func updateReceipt(_ updatedReceipt: Receipt) {
+            APIService.shared.updateReceipt(updatedReceipt) { result in
+                switch result {
+                case .success(let receipt):
+                    DispatchQueue.main.async {
+                        if let index = self.receipts.firstIndex(where: { $0.id == receipt.id }) {
+                            self.receipts[index] = receipt
+                        }
+                    }
+                case .failure(let error):
+                    // Handle error appropriately (e.g. alert the user)
+                    print("Error updating receipt: \(error.localizedDescription)")
+                }
+            }
+        }
 }
