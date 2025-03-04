@@ -1,85 +1,67 @@
+//
+//  ReceiptDetailView.swift
+//  ReceiptME
+//
+//  Created by Jimmy Lancaster on 2/18/25.
+//
+
 import SwiftUI
 
 struct ReceiptDetailView: View {
-    @ObservedObject var viewModel: ReceiptViewModel
-    let receipt: Receipt
-
-    @State private var isEditing = false
-    @State private var editableMerchant: String
-    @State private var editableTotal: String
-    @State private var editableDate: Date
-
-    // A simple DateFormatter. Modify the dateStyle/timeStyle
-    // (or use a custom format) as needed to match your app.
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter
-    }()
-
-    init(receipt: Receipt, viewModel: ReceiptViewModel) {
-        self.receipt = receipt
-        self.viewModel = viewModel
-
-        // Initialize the text fields
-        _editableMerchant = State(initialValue: receipt.merchant)
-        _editableTotal = State(initialValue: String(receipt.total))
-
-        // Attempt to parse the date string; if it fails, use the current date.
-        if let parsedDate = dateFormatter.date(from: receipt.date) {
-            _editableDate = State(initialValue: parsedDate)
-        } else {
-            _editableDate = State(initialValue: Date())
-        }
-    }
-
+    let receiptId: Int
+    @State private var receiptDetails: ReceiptDetails?
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    
     var body: some View {
         VStack {
-            if isEditing {
-                Form {
-                    Section(header: Text("Edit Receipt")) {
-                        TextField("Merchant", text: $editableMerchant)
-                        // Add the DatePicker
-                        DatePicker("Date", selection: $editableDate, displayedComponents: .date)
+            if isLoading {
+                ProgressView("Loading details...")
+            } else if let details = receiptDetails {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Merchant: \(details.merchant.name)")
+                            .font(.headline)
+                        Text("Date: \(details.date)")
+                        Text("Payment Method: \(details.payment_method)")
+                        Text("Tax: \(String(format: "$%.2f", details.tax))")
+                        Divider()
+                        Text("Items:")
+                            .font(.headline)
+                        ForEach(details.items, id: \.id) { item in
+                            HStack {
+                                Text(item.description)
+                                Spacer()
+                                Text(String(format: "$%.2f", item.price))
+                            }
+                        }
                     }
+                    .padding()
                 }
+            } else if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
             } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Merchant: \(receipt.merchant)")
-                    Text("Total: \(receipt.total, specifier: "%.2f")")
-                    Text("Date: \(receipt.date)")
-                }
-                .padding()
+                Text("No details available.")
             }
         }
-        .navigationBarTitle("Receipt Detail", displayMode: .inline)
-        .navigationBarItems(
-            leading: isEditing ? Button(action: {
-                // Reset editable values on cancel
-                editableMerchant = receipt.merchant
-                editableTotal = String(receipt.total)
-                if let parsedDate = dateFormatter.date(from: receipt.date) {
-                    editableDate = parsedDate
+        .navigationTitle("Receipt Details")
+        .onAppear(perform: fetchReceiptDetails)
+    }
+    
+    func fetchReceiptDetails() {
+        isLoading = true
+        APIService.shared.fetchReceiptDetails(receiptId: receiptId) { result in
+            DispatchQueue.main.async {
+                isLoading = false
+                switch result {
+                case .success(let details):
+                    receiptDetails = details
+                case .failure(let error):
+                    errorMessage = error.localizedDescription
                 }
-                isEditing = false
-            }) {
-                Text("Cancel")
-            } : nil,
-            trailing: Button(action: {
-                if isEditing {
-                    // Create an updated receipt with the new values
-                    var updatedReceipt = receipt
-                    updatedReceipt.merchant = editableMerchant
-                    // Convert the selected Date to a string
-                    updatedReceipt.date = dateFormatter.string(from: editableDate)
-                    
-                    viewModel.updateReceipt(updatedReceipt)
-                }
-                isEditing.toggle()
-            }) {
-                Text(isEditing ? "Save" : "Edit")
             }
-        )
+        }
     }
     
 }

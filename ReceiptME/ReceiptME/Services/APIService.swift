@@ -8,11 +8,6 @@
 import Foundation
 import UIKit
 
-enum APIError: Error {
-    case invalidURL
-    case noData
-}
-
 
 class APIService {
     static let shared = APIService()
@@ -40,7 +35,8 @@ class APIService {
             return request
         }
         
-
+    
+    // Update this with your backend base URL.
     let baseURL = "https://cse437.graysonmartin.net"
     
     
@@ -118,48 +114,6 @@ class APIService {
             do {
                 let details = try JSONDecoder().decode(ReceiptDetails.self, from: data)
                 completion(.success(details))
-            } catch {
-                completion(.failure(error))
-            }
-        }.resume()
-    }
-    
-    func updateReceipt(_ receipt: Receipt, completion: @escaping (Result<Receipt, Error>) -> Void) {
-        guard let url = URL(string: "\(baseURL)/receipts/\(receipt.id)") else {
-            completion(.failure(APIError.invalidURL))
-            return
-        }
-        
-        // Encode the receipt to JSON
-        let jsonData: Data
-        do {
-            jsonData = try JSONEncoder().encode(receipt)
-        } catch {
-            completion(.failure(error))
-            return
-        }
-        
-        // Create the authorized request for PATCH
-        let request = createAuthorizedRequest(url: url,
-                                              method: "PATCH",
-                                              contentType: "application/json",
-                                              body: jsonData)
-        
-        // Perform the network call
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
-                completion(.failure(APIError.noData))
-                return
-            }
-            
-            do {
-                let updatedReceipt = try JSONDecoder().decode(Receipt.self, from: data)
-                completion(.success(updatedReceipt))
             } catch {
                 completion(.failure(error))
             }
