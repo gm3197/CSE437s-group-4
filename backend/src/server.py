@@ -18,7 +18,7 @@ def	google_auth_token():
 		bottle.response.status = 400
 		return "Bad request"
 	token_str = data["idToken"]
-	token_data = google_auth.verify_oauth2_token(token_str, google_requests.Request(), "650383131525-anbr9ft0hfl03jbhbl21sokpgchc12tg.apps.googleusercontent.com")
+	token_data = google_auth.verify_oauth2_token(token_str, google_requests.Request(), os.environ["GOOGLE_AUTH_CLIENT_ID"])
 
 	if not token_data["email_verified"]:
 		bottle.response.status = 403

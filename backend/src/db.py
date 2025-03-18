@@ -1,10 +1,11 @@
 import psycopg
 import random
 import string
+import os
 
 def connect():
 	try:
-		conn = psycopg.connect("dbname=cse437 user=cse437 password=cse437test123")
+		conn = psycopg.connect(os.environ["POSTGRES_CONNECTION_STRING"])
 	except Exception as e:
 		raise e
 	return conn
