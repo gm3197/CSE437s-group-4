@@ -1,0 +1,23 @@
+services:
+  db:
+    image: docker.io/postgres:latest
+    container_name: receiptme-db
+    environment:
+      - POSTGRES_USER=cse437
+      - POSTGRES_PASSWORD=cse437test123
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: receiptme-backend
+    command: python3 server.py
+    volumes:
+      - ./src:/app:Z
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_CONNECTION_STRING=postgresql://cse437:cse437test123@receiptme-db:5432/postgres
+      - GOOGLE_AUTH_CLIENT_ID=650383131525-anbr9ft0hfl03jbhbl21sokpgchc12tg.apps.googleusercontent.com
+      - OPENAI_API_KEY=
