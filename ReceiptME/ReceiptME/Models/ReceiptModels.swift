@@ -57,6 +57,7 @@ struct ReceiptItem: Codable, Identifiable {
     var id: UUID = UUID()
     var description: String
     var price: Double
+    //var category: String?
 
     private enum CodingKeys: String, CodingKey {
         case description, price
