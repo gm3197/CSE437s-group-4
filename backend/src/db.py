@@ -111,11 +111,9 @@ def get_receipt(receipt_id):
 			"owner_id": receipt[1],
 			"clean": receipt[8],
 			"date": receipt[2].__str__(),
-			"merchant": {
-				"name": receipt[3],
-				"address": receipt[4],
-				"domain": receipt[5]
-			},
+            "merchant": receipt[3],
+            "merchant_address": receipt[4],
+            "merchant_domain": receipt[5],
 			"payment_method": receipt[6],
 			"items": out_items,
 			"tax": receipt[7]
