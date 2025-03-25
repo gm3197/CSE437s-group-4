@@ -110,6 +110,12 @@ extension ReceiptDetailView {
             
             Divider().background(Color.white.opacity(0.3))
             
+            infoSectionHeader("Total")
+            Text(String(format: "$%.2f", receipt.total))
+                .infoSectionValueStyle()
+            
+            Divider().background(Color.white.opacity(0.3))
+            
             infoSectionHeader("Payment Method")
             Text(details.payment_method)
                 .infoSectionValueStyle()
