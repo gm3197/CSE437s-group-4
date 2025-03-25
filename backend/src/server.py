@@ -8,6 +8,7 @@ from openai import OpenAI
 import json
 import io
 import os
+from datetime import datetime
 
 openai_client = OpenAI()
 
@@ -28,6 +29,60 @@ def	google_auth_token():
 	return {
 		"session": session_token
 	}
+
+@bottle.get("/categories")
+def get_budget():
+		return get_budget_for_month(datetime.now().year, datetime.now().month)
+
+@bottle.get("/categories/<year>/<month>")
+def get_budget_for_month(year, month):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	try:
+		year = int(year)
+		month = int(month)
+	except:
+		bottle.response.status = 404
+		return "Not Found"
+		
+	categories = db.get_budget_categories(user_id, year, month)
+
+	return {
+		"categories": categories
+	}
+
+@bottle.post("/categories")
+def create_category():
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	req_data = bottle.request.json
+
+	if "name" not in req_data or "color" not in req_data or "monthly_goal" not in req_data:
+		bottle.response.status = 400
+		return "Bad request"
+
+	if len(req_data["color"]) != 6:
+		bottle.response.status = 400
+		return "color should be a 6 digit HEX color"
+
+	try:
+		monthly_goal = float(req_data["monthly_goal"])
+	except:
+		bottle.response.status = 400
+		return "monthly_goal should be a double"
+
+	category_id = db.create_category(user_id, req_data["name"], req_data["color"], monthly_goal)
+
+	return {
+		"category_id": category_id
+	}
+
 
 @bottle.get("/receipts")
 def get_receipts():
