@@ -176,37 +176,48 @@ class APIService {
     // MARK: - Update Detailed Receipt
     /// Updates all fields in `ReceiptDetails`, including items, payment_method, merchant name, tax, etc.
     func updateReceiptDetails(_ details: ReceiptDetails, completion: @escaping (Result<ReceiptDetails, Error>) -> Void) {
+//        print("Updating receipt details (b): \(details)\n")
         guard let url = URL(string: "\(baseURL)/receipts/\(details.id)") else {
             completion(.failure(APIError.invalidURL))
+            print("z")
             return
         }
         
         do {
+            print("y") // yes
             let jsonData = try JSONEncoder().encode(details)
             let request = createAuthorizedRequest(url: url,
                                                   method: "PATCH",
                                                   contentType: "application/json",
                                                   body: jsonData)
-            
+            print("x")// yes
             URLSession.shared.dataTask(with: request) { data, response, error in
+//                print("Data object? : \(data)")
                 if let error = error {
                     completion(.failure(error))
+                    print("w")
                     return
                 }
                 
                 guard let data = data else {
                     completion(.failure(APIError.noData))
+                    print("v")
                     return
                 }
                 
                 do {
+                    print("u")// yes
+                    print("Raw response data:", String(data: data, encoding: .utf8) ?? "Invalid response")
                     let updatedDetails = try JSONDecoder().decode(ReceiptDetails.self, from: data)
                     completion(.success(updatedDetails))
+                    print("r")
                 } catch {
+                    print("t")// yes
                     completion(.failure(error))
                 }
             }.resume()
         } catch {
+            print("s")
             completion(.failure(error))
         }
     }

@@ -72,6 +72,17 @@ struct ReceiptDetailView: View {
             trailing: Button(isEditing ? "Save" : "Edit") {
                 if isEditing {
                     saveEdits()
+                    // REFRESH RECEIPT AFTER UPDATING
+                    // Fetch the full details for this receipt
+                    viewModel.fetchReceiptDetails(receiptId: receipt.id) { result in
+                        switch result {
+                        case .success(let fetchedDetails):
+                            self.details = fetchedDetails
+                            setupEditableFields(with: fetchedDetails)
+                        case .failure(let error):
+                            print("Error fetching full details (b): \(error)")
+                        }
+                    }
                 }
                 isEditing.toggle()
             }
@@ -99,7 +110,7 @@ extension ReceiptDetailView {
         VStack(alignment: .leading, spacing: 16) {
             
             infoSectionHeader("Merchant")
-            Text(details.merchant.name)
+            Text(details.merchant)
                 .infoSectionValueStyle()
             
             Divider().background(Color.white.opacity(0.3))
@@ -195,6 +206,7 @@ extension ReceiptDetailView {
                     }
                 }
                 // Add or remove items if desired
+                
             }
         }
         .scrollContentBackground(.hidden)
@@ -206,7 +218,7 @@ extension ReceiptDetailView {
     
     // MARK: Editable Fields Management
     private func setupEditableFields(with details: ReceiptDetails) {
-        editableMerchantName = details.merchant.name
+        editableMerchantName = details.merchant
         editablePaymentMethod = details.payment_method
         isClean = details.clean
         editableTax = String(details.tax)
@@ -225,7 +237,7 @@ extension ReceiptDetailView {
         guard var details = details else { return }
         
         // Merchant name, Payment method, Clean
-        details.merchant.name = editableMerchantName
+        details.merchant = editableMerchantName
         details.payment_method = editablePaymentMethod
         details.clean = isClean
         
@@ -244,6 +256,7 @@ extension ReceiptDetailView {
         viewModel.updateReceiptDetails(details) { updated in
             // On success, refresh local
             self.details = updated
+            
         }
     }
     

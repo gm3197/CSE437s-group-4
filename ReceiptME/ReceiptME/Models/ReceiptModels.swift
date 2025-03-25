@@ -39,16 +39,18 @@ struct ReceiptDetails: Codable, Identifiable {
     var owner_id: Int
     var clean: Bool
     var date: String
-    var merchant: Merchant
+//    var merchant: Merchant
+    var merchant: String
+    var merchant_address: String
+    var merchant_domain: String
     var payment_method: String
     var items: [ReceiptItem]
     var tax: Double
 }
 
-struct Merchant: Codable {
-    var id: Int?
-    var name: String
-}
+//struct Merchant: Codable { // don't need this bc only one item now..
+//    var name: String
+//}
 
 struct ReceiptItem: Codable, Identifiable {
     // This id is generated locally and won't be decoded from the JSON.

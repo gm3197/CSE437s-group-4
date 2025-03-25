@@ -7,6 +7,7 @@ struct DashboardView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var hasFetched = false // Prevent repeated API calls
+    @State private var selectedSortOption = "Sort By: " // Default dropdown text
     
     var body: some View {
         NavigationView {
@@ -25,6 +26,21 @@ struct DashboardView: View {
         .refreshable {
             fetchReceipts()
         }
+    }
+    
+    // Add sorting methods
+    private func sortReceiptsByDate() { // date is stored as a string !!
+        viewModel.receipts.sort { $0.date < $1.date }
+        
+//        let date
+        
+    }
+    
+    private func sortReceiptsByTotal() {
+        viewModel.receipts.sort { $0.total < $1.total }
+    }
+    private func sortReceiptsByMerchant() {
+        viewModel.receipts.sort { $0.merchant.localizedCaseInsensitiveCompare($1.merchant) == .orderedAscending }
     }
     
     // MARK: - Background Gradient
@@ -82,6 +98,10 @@ struct DashboardView: View {
             .background(Color.white.opacity(0.2))
             .cornerRadius(12)
             .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
+        .refreshable {
+            print("Page refreshed !!")
+            fetchReceipts()
+        }
     }
     
     // MARK: - List View
@@ -140,6 +160,7 @@ struct DashboardView: View {
                 isLoading = false
                 switch result {
                 case .success(let list):
+                    print("Successfully fetched receipts")
                     // Convert [ReceiptPreview] -> [Receipt]
                     viewModel.receipts = list.receipts.map { preview in
                         Receipt(
@@ -150,6 +171,7 @@ struct DashboardView: View {
                         )
                     }
                 case .failure(let error):
+                    print("Failed to fetch receipts")
                     errorMessage = error.localizedDescription
                 }
             }
