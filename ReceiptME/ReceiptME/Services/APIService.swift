@@ -208,7 +208,7 @@ class APIService {
                     completion(.failure(error))
                 }
             }.resume()
-        } catch {
+        } catch { // prints error bc backend doesnt send any success message back -- functionality still works
             completion(.failure(error))
         }
     }

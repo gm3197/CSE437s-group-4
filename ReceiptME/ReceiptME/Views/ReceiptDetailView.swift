@@ -26,6 +26,9 @@ struct ReceiptDetailView: View {
     // Items in the receipt
     @State private var editableItems: [ReceiptItem] = []
     
+    // add receiptItem state var here:
+//    @State private var newItem = ReceiptItem(id: UUID(), description: "", price: 0.0) // initializing
+    
     // A simple DateFormatter. Adjust to match your desired format.
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -109,73 +112,117 @@ extension ReceiptDetailView {
     // MARK: Non-Editing State
     private func detailCard(for details: ReceiptDetails) -> some View {
         VStack(alignment: .leading, spacing: 16) {
+            // ERROR: The compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
+            // SOLN: Create subviews and call them within this VStack
+    
+            merchantSection(details)
+            dateSection(details)
+            totalSection(details)
+            paymentMethodSection(details)
+            taxSection(details)
+            cleanSection(details)
+            itemsSection()
+            additionalInfoSection(details)
             
-            infoSectionHeader("Merchant")
-            Text(details.merchant)
-                .infoSectionValueStyle()
-            
-            Divider().background(Color.white.opacity(0.3))
-            
-            infoSectionHeader("Date")
-            Text(details.date)
-                .infoSectionValueStyle()
-            
-            Divider().background(Color.white.opacity(0.3))
-            
-            infoSectionHeader("Total")
-            Text(String(format: "$%.2f", receipt.total))
-                .infoSectionValueStyle()
-            
-            Divider().background(Color.white.opacity(0.3))
-            
-            infoSectionHeader("Payment Method")
-            Text(details.payment_method)
-                .infoSectionValueStyle()
-            
-            Divider().background(Color.white.opacity(0.3))
-            
-            infoSectionHeader("Tax")
-            Text(String(format: "$%.2f", details.tax))
-                .infoSectionValueStyle()
-            
-            Divider().background(Color.white.opacity(0.3))
-            
-            infoSectionHeader("Clean?")
-            Text(details.clean ? "Yes" : "No")
-                .infoSectionValueStyle()
-            
-            Divider().background(Color.white.opacity(0.3))
-            
-            infoSectionHeader("Items")
-            ForEach(details.items) { item in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.description)
-                        .font(.system(.body, design: .rounded))
-                        .foregroundColor(.white)
-                    Text(String(format: "$%.2f", item.price))
-                        .font(.system(.footnote, design: .rounded))
-                        .foregroundColor(.white.opacity(0.9))
-                }
-                Divider().background(Color.white.opacity(0.2))
-            }
-            
-            // Additional debugging or advanced info
-            Divider().background(Color.white.opacity(0.3))
-            
-            infoSectionHeader("Owner ID")
-            Text("\(details.owner_id)")
-                .infoSectionValueStyle()
-            
-            infoSectionHeader("Receipt ID")
-            Text("\(details.id)")
-                .infoSectionValueStyle()
-            
-        }
+        } // end of vstack
         .padding(20)
         .background(Color.white.opacity(0.15))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.2), radius: 6, x: 3, y: 4)
     }
+    
+    // subviews that will be called wihtin detailCard VStack
+    private func merchantSection(_ details: ReceiptDetails) -> some View {
+        VStack {
+            infoSectionHeader("Merchant")
+            Text(details.merchant)
+                .infoSectionValueStyle()
+            Divider().background(Color.white.opacity(0.3))
+        }
+    }
+    private func dateSection(_ details: ReceiptDetails) -> some View {
+        VStack {
+            infoSectionHeader("Date")
+            Text(details.date)
+                .infoSectionValueStyle()
+            Divider().background(Color.white.opacity(0.3))
+        }
+    }
+    private func totalSection(_ details: ReceiptDetails) -> some View {
+        VStack {
+            infoSectionHeader("Total")
+            Text(String(format: "$%.2f", receipt.total))
+                .infoSectionValueStyle()
+            Divider().background(Color.white.opacity(0.3))
+        }
+    }
+    private func taxSection(_ details: ReceiptDetails) -> some View {
+        VStack {
+            infoSectionHeader("Tax")
+            Text(String(format: "$%.2f", details.tax))
+                .infoSectionValueStyle()
+            Divider().background(Color.white.opacity(0.3))
+        }
+    }
+
+    private func cleanSection(_ details: ReceiptDetails) -> some View {
+        VStack {
+            infoSectionHeader("Clean?")
+            Text(details.clean ? "Yes" : "No")
+                .infoSectionValueStyle()
+            Divider().background(Color.white.opacity(0.3))
+        }
+    }
+
+    private func itemsSection() -> some View {
+        VStack {
+            infoSectionHeader("Items")
+            ForEach(editableItems.indices, id: \.self) { index in
+                NavigationLink(destination: ReceiptItemView(
+//                    item_id: $editableItems[index].id,
+//                    item_name: $editableItems[index].description,
+//                    item_price: $editableItems[index].price
+                    receiptItem: $editableItems[index], // pass object instead of seperate items
+                    saveAction: saveEdits
+                )) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(editableItems[index].description)
+                            .font(.system(.body, design: .rounded))
+                            .foregroundColor(.white)
+                        Text(String(format: "$%.2f", editableItems[index].price))
+                            .font(.system(.footnote, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                    .padding()
+                    .background(Color.white.opacity(0.15))
+                    .cornerRadius(8)
+                }
+                Divider().background(Color.white.opacity(0.2))
+            }
+        }
+    }
+
+    private func additionalInfoSection(_ details: ReceiptDetails) -> some View {
+        VStack {
+            Divider().background(Color.white.opacity(0.3))
+            infoSectionHeader("Owner ID")
+            Text("\(details.owner_id)").infoSectionValueStyle()
+            infoSectionHeader("Receipt ID")
+            Text("\(details.id)").infoSectionValueStyle()
+        }
+    }
+
+    // end subviews
+    
+    private func paymentMethodSection(_ details: ReceiptDetails) -> some View {
+        VStack {
+            infoSectionHeader("Payment Method")
+            Text(details.payment_method)
+                .infoSectionValueStyle()
+            Divider().background(Color.white.opacity(0.3))
+        }
+    }
+
     
 
     // MARK: Editing State
@@ -220,6 +267,8 @@ extension ReceiptDetailView {
     
     private func saveEdits() {
         guard var details = details else { return }
+        
+        print("detials in saveEdits func: \(details)\n")
         
         // Merchant name, Payment method, Clean
         details.merchant = editableMerchantName
