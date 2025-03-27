@@ -29,7 +29,8 @@ struct ReceiptDetailView: View {
     // A simple DateFormatter. Adjust to match your desired format.
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
+        formatter.dateFormat = "yyyy-MM-dd"
+//        formatter.dateStyle = .medium
         return formatter
     }()
 
@@ -176,45 +177,19 @@ extension ReceiptDetailView {
         .shadow(color: .black.opacity(0.2), radius: 6, x: 3, y: 4)
     }
     
+
     // MARK: Editing State
     private var editForm: some View {
         Form {
-            Section(header: Text("Edit Receipt").font(.system(.headline, design: .rounded))) {
-                
-                TextField("Merchant Name", text: $editableMerchantName)
-                    .font(.system(.body, design: .rounded))
-                
-                DatePicker("Date", selection: $editableDate, displayedComponents: .date)
-                    .font(.system(.body, design: .rounded))
-                
-                TextField("Payment Method", text: $editablePaymentMethod)
-                    .font(.system(.body, design: .rounded))
-                
-                TextField("Tax", text: $editableTax)
-                    .keyboardType(.decimalPad)
-                    .font(.system(.body, design: .rounded))
-                
-                Toggle(isOn: $isClean) {
-                    Text("Clean?")
+                Section(header: Text("Edit Receipt").font(.system(.headline, design: .rounded))) {
+                    TextField("Merchant Name", text: $editableMerchantName)
                         .font(.system(.body, design: .rounded))
+                    
+                    DatePicker("Date", selection: $editableDate, displayedComponents: .date)
+                        .font(.system(.body, design: .rounded))
+                                
                 }
             }
-            
-            Section(header: Text("Items").font(.system(.headline, design: .rounded))) {
-                ForEach($editableItems) { $item in
-                    VStack(alignment: .leading) {
-                        TextField("Item Name", text: $item.description)
-                            .font(.system(.body, design: .rounded))
-                        
-                        TextField("Price", value: $item.price, format: .number)
-                            .keyboardType(.decimalPad)
-                            .font(.system(.body, design: .rounded))
-                    }
-                }
-                // Add or remove items if desired
-                
-            }
-        }
         .scrollContentBackground(.hidden)
         .background(Color.white.opacity(0.15))
         .cornerRadius(16)
@@ -228,8 +203,12 @@ extension ReceiptDetailView {
         editablePaymentMethod = details.payment_method
         isClean = details.clean
         editableTax = String(details.tax)
+        
         if let parsedDate = dateFormatter.date(from: details.date) {
             editableDate = parsedDate
+        }
+        else {
+            print("Error converting date to Date object")
         }
         editableItems = details.items
     }
