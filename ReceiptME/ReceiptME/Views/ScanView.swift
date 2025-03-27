@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct ScanView: View {
-    @State private var showImagePicker = false
-//    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
-    @State private var sourceType: UIImagePickerController.SourceType = .camera
+    @State private var showCameraImagePicker = false
+    @State private var showPhotoLibraryImagePicker = false
+    @State private var cameraSourceType: UIImagePickerController.SourceType = .camera
+    @State private var photoLibrarySourceType: UIImagePickerController.SourceType = .photoLibrary
+    
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
     @State private var isUploadButtonHidden = false
@@ -57,13 +59,11 @@ struct ScanView: View {
                         // 4) Buttons Row (Camera / Photo Library)
                         HStack(spacing: 20) {
                             Button(action: {
-                                print("Source type before source type re-assigned: \(sourceType)")
-                                sourceType = .camera
-                                print("Source type before button pressed: \(sourceType)")
+                                cameraSourceType = .camera
                                 DispatchQueue.main.async {
-                                        showImagePicker = true
+                                        showCameraImagePicker = true
                                     }
-                                print("Source type afer image picker assigned: \(sourceType)")
+                                
 //                                showImagePicker = true
                                 isUploadButtonHidden = false
                                 uploadResult = nil
@@ -76,13 +76,11 @@ struct ScanView: View {
                             .buttonStyle(SleekButtonStyle())
                             
                             Button(action: {
-                                print("Source type before source type re-assigned: \(sourceType)")
-                                sourceType = .photoLibrary
-                                print("Source type before button pressed: \(sourceType)")
+                                photoLibrarySourceType = .photoLibrary
                                 DispatchQueue.main.async {
-                                        showImagePicker = true
+                                        showPhotoLibraryImagePicker = true
                                     }
-                                print("Source type afer image picker assigned: \(sourceType)")
+
 //                                showImagePicker = true
                                 isUploadButtonHidden = false
                                 uploadResult = nil
@@ -144,8 +142,11 @@ struct ScanView: View {
             .navigationDestination(for: Int.self) { receiptId in
                 ReceiptDetailWrapper(receiptId: receiptId)
             }
-            .sheet(isPresented: $showImagePicker) {
-                ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
+            .sheet(isPresented: $showCameraImagePicker) {
+                ImagePicker(selectedImage: $selectedImage, sourceType: cameraSourceType)
+            }
+            .sheet(isPresented: $showPhotoLibraryImagePicker) {
+                ImagePicker(selectedImage: $selectedImage, sourceType: photoLibrarySourceType)
             }
         } // end NavigationStack
     }
@@ -160,10 +161,14 @@ struct ScanView: View {
         // If you want rotation or image fixes, do that here
         let imageToUpload: UIImage
         
-        if sourceType == .camera {
-//            imageToUpload = rotateImage(image: image, clockwise: true)
+        if showCameraImagePicker { // idt need this...
+            print("Uploading pic from camera")
+            imageToUpload = image
+        } else if showPhotoLibraryImagePicker {
+            print("Uploading pic from photo library")
             imageToUpload = image
         } else {
+            print("Uploading pic without assigned source type")
             imageToUpload = image
         }
         
