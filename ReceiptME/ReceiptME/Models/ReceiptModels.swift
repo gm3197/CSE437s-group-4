@@ -85,3 +85,10 @@ struct Category: Codable {
     var monthly_goal: Double
     var monthly_spend: Double
 }
+
+struct CreateCategoryRequest: Codable {
+    var name: String
+    var monthly_goal: Double
+}
+
+typealias UpdateCategoryRequest = CreateCategoryRequest
