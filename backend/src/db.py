@@ -15,7 +15,7 @@ def init():
 		cur = conn.cursor()
 		cur.execute("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE, full_name VARCHAR(255), session_token VARCHAR(255))")
 		cur.execute("CREATE TABLE IF NOT EXISTS receipts (id SERIAL PRIMARY KEY, owner_id INTEGER REFERENCES users, date DATE, merchant VARCHAR(255), merchant_address TEXT, merchant_domain VARCHAR(255), payment_method VARCHAR(255), tax DOUBLE PRECISION, clean BOOLEAN)")
-		cur.execute("CREATE TABLE IF NOT EXISTS budget_categories (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users, name TEXT, color VARCHAR(6), monthly_goal DOUBLE PRECISION)")
+		cur.execute("CREATE TABLE IF NOT EXISTS budget_categories (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users, name TEXT, monthly_goal DOUBLE PRECISION)")
 		cur.execute("CREATE TABLE IF NOT EXISTS receipt_items (id SERIAL PRIMARY KEY, receipt_id INTEGER REFERENCES receipts, description VARCHAR(255), price DOUBLE PRECISION, bbox_left INTEGER, bbox_top INTEGER, bbox_right INTEGER, bbox_bottom INTEGER, category INTEGER REFERENCES budget_categories)")
 
 def login_user(email, full_name):
@@ -45,23 +45,22 @@ def check_session_token(token):
 def get_budget_categories(user_id, year, month):
 	with connect() as conn:
 		cur = conn.cursor()
-		cur.execute("SELECT id, name, color, monthly_goal, (SELECT SUM(price) FROM receipt_items JOIN receipts ON receipts.id = receipt_items.receipt_id WHERE receipt_items.category = budget_categories.id AND receipts.owner_id = budget_categories.user_id AND EXTRACT(YEAR FROM receipts.date) = %s AND EXTRACT(MONTH FROM receipts.date) = %s) as month_spend FROM budget_categories WHERE user_id = %s", (year, month, user_id))
+		cur.execute("SELECT id, name, monthly_goal, (SELECT SUM(price) FROM receipt_items JOIN receipts ON receipts.id = receipt_items.receipt_id WHERE receipt_items.category = budget_categories.id AND receipts.owner_id = budget_categories.user_id AND EXTRACT(YEAR FROM receipts.date) = %s AND EXTRACT(MONTH FROM receipts.date) = %s) as month_spend FROM budget_categories WHERE user_id = %s", (year, month, user_id))
 		rows = cur.fetchall()
 		categories = []
 		for row in rows:
 			categories.append({
 				"id": row[0],
 				"name": row[1],
-				"color": row[2],
-				"monthly_goal": row[3],
-				"month_spend": row[4] if row[4] is not None else 0.00
+				"monthly_goal": row[2],
+				"month_spend": row[3] if row[3] is not None else 0.00
 			})
 		return categories
 
-def create_category(user_id, name, color, monthly_goal):
+def create_category(user_id, name, monthly_goal):
 	with connect() as conn:
 		cur = conn.cursor()
-		cur.execute("INSERT INTO budget_categories (user_id, name, color, monthly_goal) VALUES (%s, %s, %s, %s) RETURNING id", (user_id, name, color, monthly_goal))
+		cur.execute("INSERT INTO budget_categories (user_id, name, monthly_goal) VALUES (%s, %s, %s, %s) RETURNING id", (user_id, name, monthly_goal))
 		return cur.fetchone()[0]
 
 def create_receipt(user_id, date, merchant, merchant_address, merchant_domain, payment_method, tax, clean):

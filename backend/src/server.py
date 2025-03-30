@@ -63,13 +63,9 @@ def create_category():
 
 	req_data = bottle.request.json
 
-	if "name" not in req_data or "color" not in req_data or "monthly_goal" not in req_data:
+	if "name" not in req_data or "monthly_goal" not in req_data:
 		bottle.response.status = 400
 		return "Bad request"
-
-	if len(req_data["color"]) != 6:
-		bottle.response.status = 400
-		return "color should be a 6 digit HEX color"
 
 	try:
 		monthly_goal = float(req_data["monthly_goal"])
@@ -77,10 +73,13 @@ def create_category():
 		bottle.response.status = 400
 		return "monthly_goal should be a double"
 
-	category_id = db.create_category(user_id, req_data["name"], req_data["color"], monthly_goal)
+	category_id = db.create_category(user_id, req_data["name"], monthly_goal)
 
 	return {
-		"category_id": category_id
+		"id": category_id,
+        "name": req_data["name"],
+        "monthly_goal": req_data["monthly_goal"],
+        "month_spend": 0.0,
 	}
 
 
