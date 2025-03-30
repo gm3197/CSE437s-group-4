@@ -12,14 +12,20 @@ struct DashboardView: View {
     @State private var year: Int = Calendar.current.component(.year, from: Date())
     @State private var categories: [Category] = []
     
+    enum BudgetValue: CaseIterable, Identifiable {
+        case percentage, amount
+        var id: Self { self }
+    }
+    @State private var categoryShowing: BudgetValue = .percentage
+    
     var body: some View {
         NavigationView {
             ZStack {
                 backgroundGradient
                 contentView
                     .refreshable {
-                        print("Page refreshed !!")
                         fetchReceipts()
+                        fetchCategories()
                     }
             }
             .navigationTitle("Dashboard")
@@ -31,10 +37,6 @@ struct DashboardView: View {
                     hasFetched = true
                 }
             }
-        }
-        .refreshable {
-            fetchReceipts()
-            fetchCategories()
         }
     }
     
@@ -99,7 +101,7 @@ struct DashboardView: View {
     private var listView: some View {
         List {
             Section() {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .center) {
                         Button("", systemImage: "arrow.left", action: {
                             if month == 1 {
@@ -128,16 +130,40 @@ struct DashboardView: View {
                             .labelStyle(.iconOnly)
                             .buttonStyle(.borderless)
                     }
+                    HStack(alignment: .center) {
+                        Text("Budget Categories")
+                            .font(.headline)
+                        Spacer()
+                        NewCategoryButton(parent: self)
+                    }
                     ForEach(categories) { category in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(category.name)
-                                .font(.headline)
+                                .font(.system(size: 14))
                             HStack(alignment: .center, spacing: 4) {
                                 ProgressView(value: category.month_spend / category.monthly_goal)
-                                Text(String(format: "%.0f%%", category.month_spend / category.monthly_goal * 100))
-                                    .font(.footnote)
+                                if categoryShowing == .percentage {
+                                    Text(String(format: "%.0f%%", category.month_spend / category.monthly_goal * 100))
+                                        .font(.footnote)
+                                } else {
+                                    Text(String(format: "$%.2f", category.month_spend))
+                                        .font(.footnote)
+                                }
                             }
                         }
+                    }
+                    HStack() {
+                        Text(String(format: "Total: $%.2f", categories.map { element in
+                            element.month_spend
+                        }.reduce(0, +)))
+                            .font(.body.bold())
+                        Spacer()
+                        Picker("Number Type", selection: $categoryShowing) {
+                            Text("$").tag(BudgetValue.amount)
+                            Text("%").tag(BudgetValue.percentage)
+                        }
+                            .pickerStyle(.segmented)
+                            .frame(width: 80)
                     }
                 }
                     .listRowBackground(Color.white.opacity(0.15))
@@ -157,6 +183,62 @@ struct DashboardView: View {
             }
         }
         .scrollContentBackground(.hidden) // iOS 16+ to let the gradient show through
+    }
+    
+    private struct NewCategoryButton: View {
+        @State private var presented = false
+        @State private var name = ""
+        @State private var spendGoal = ""
+        @State private var errorStr: String? = nil
+        @State private var errorPresented = false
+        
+        private var parent: DashboardView
+        
+        init(parent: DashboardView) {
+            self.parent = parent
+        }
+        
+        var body: some View {
+            Button("New Category", systemImage: "plus") {
+                name = ""
+                spendGoal = ""
+                presented = true
+            }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .alert("New Category", isPresented: $presented, actions: {
+                    TextField("Category Name", text: $name)
+                    TextField("Monthly Spend Goal", text: $spendGoal)
+                        .keyboardType(.decimalPad)
+                    Button("Save") {
+                        guard let goal = Double(spendGoal) else {
+                            errorPresented = true
+                            errorStr = "Please enter a valid dollar amount"
+                            return
+                        }
+                        APIService.shared.createCategory(name: name, spending_goal: goal) { result in
+                            switch result {
+                            case .success:
+                                presented = false
+                                parent.fetchCategories()
+                            case .failure(let err):
+                                presented = false
+                                errorPresented = true
+                                errorStr = err.localizedDescription
+                            }
+                        }
+                    }
+                    Button("Cancel", role: .cancel) {
+                        presented = false
+                    }
+                })
+                .alert(errorStr ?? "Unable to create category", isPresented: $errorPresented) {
+                    Button("OK", role: .cancel) {
+                        errorPresented = false
+                        presented = true
+                    }
+                }
+        }
     }
     
     // MARK: - Receipt Row Subview
