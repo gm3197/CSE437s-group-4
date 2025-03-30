@@ -60,7 +60,7 @@ def get_budget_categories(user_id, year, month):
 def create_category(user_id, name, monthly_goal):
 	with connect() as conn:
 		cur = conn.cursor()
-		cur.execute("INSERT INTO budget_categories (user_id, name, monthly_goal) VALUES (%s, %s, %s, %s) RETURNING id", (user_id, name, monthly_goal))
+		cur.execute("INSERT INTO budget_categories (user_id, name, monthly_goal) VALUES (%s, %s, %s) RETURNING id", (user_id, name, monthly_goal))
 		return cur.fetchone()[0]
 
 def create_receipt(user_id, date, merchant, merchant_address, merchant_domain, payment_method, tax, clean):
