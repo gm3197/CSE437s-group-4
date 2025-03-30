@@ -230,4 +230,31 @@ class APIService {
             completion(.success(()))
         }.resume()
     }
+   
+    func getCategories(year: Int, month: Int, completion: @escaping (Result<[Category], Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/categories/\(year)/\(month)") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        let request = createAuthorizedRequest(url: url, method: "GET")
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(APIError.noData))
+                return
+            }
+
+            do {
+                let responseData = try JSONDecoder().decode(GetCategoriesResponse.self, from: data)
+                completion(.success(responseData.categories))
+            } catch {
+                completion(.failure(error))
+            }
+        }.resume()
+    }
 }

@@ -73,3 +73,15 @@ struct ReceiptItem: Codable, Identifiable {
         self.price = price
     }
 }
+
+// MARK: - Categories
+struct GetCategoriesResponse: Codable {
+    var categories: [Category]
+}
+
+struct Category: Codable {
+    var id: Int
+    var name: String
+    var monthly_goal: Double
+    var monthly_spend: Double
+}
