@@ -7,23 +7,34 @@ struct DashboardView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var hasFetched = false // Prevent repeated API calls
+   
+    @State private var month: Int = Calendar.current.component(.month, from: Date())
+    @State private var year: Int = Calendar.current.component(.year, from: Date())
+    @State private var categories: [Category] = []
     
     var body: some View {
         NavigationView {
             ZStack {
                 backgroundGradient
                 contentView
+                    .refreshable {
+                        print("Page refreshed !!")
+                        fetchReceipts()
+                    }
             }
             .navigationTitle("Dashboard")
             .onAppear {
                 if !hasFetched {
+                    isLoading = true
                     fetchReceipts()
+                    fetchCategories()
                     hasFetched = true
                 }
             }
         }
         .refreshable {
             fetchReceipts()
+            fetchCategories()
         }
     }
     
@@ -87,21 +98,63 @@ struct DashboardView: View {
     // MARK: - List View
     private var listView: some View {
         List {
-            ForEach(viewModel.receipts) { receipt in
-                NavigationLink(
-                    destination: ReceiptDetailView(viewModel: viewModel, receipt: receipt)
-                ) {
-                    ReceiptRow(receipt: receipt)
+            Section() {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .center) {
+                        Button("", systemImage: "arrow.left", action: {
+                            if month == 1 {
+                                month = 12
+                                year -= 1
+                            } else {
+                                month -= 1
+                            }
+                            fetchCategories()
+                        })
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.borderless)
+                        Spacer()
+                        Text(verbatim: "\(Calendar.current.monthSymbols[month - 1]) \(year)")
+                            .font(.title.bold())
+                        Spacer()
+                        Button("", systemImage: "arrow.right", action: {
+                            if month == 12 {
+                                month = 1
+                                year += 1
+                            } else {
+                                month += 1
+                            }
+                            fetchCategories()
+                        })
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.borderless)
+                    }
+                    ForEach(categories) { category in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(category.name)
+                                .font(.headline)
+                            HStack(alignment: .center, spacing: 4) {
+                                ProgressView(value: category.month_spend / category.monthly_goal)
+                                Text(String(format: "%.0f%%", category.month_spend / category.monthly_goal * 100))
+                                    .font(.footnote)
+                            }
+                        }
+                    }
                 }
-                .listRowBackground(Color.white.opacity(0.15))
-                .cornerRadius(10)
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 1, y: 2)
+                    .listRowBackground(Color.white.opacity(0.15))
             }
-            .onDelete(perform: deleteItems)
-        }
-        .refreshable {
-            print("Page refreshed !!")
-            fetchReceipts()
+            Section(header: Text("Receipts")) {
+                ForEach(viewModel.receipts) { receipt in
+                    NavigationLink(
+                        destination: ReceiptDetailView(viewModel: viewModel, receipt: receipt)
+                    ) {
+                        ReceiptRow(receipt: receipt)
+                    }
+                    .listRowBackground(Color.white.opacity(0.15))
+                    .cornerRadius(10)
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 1, y: 2)
+                }
+                .onDelete(perform: deleteItems)
+            }
         }
         .scrollContentBackground(.hidden) // iOS 16+ to let the gradient show through
     }
@@ -132,9 +185,19 @@ struct DashboardView: View {
         // viewModel.receipts.remove(atOffsets: offsets)
     }
     
+    private func fetchCategories() {
+        APIService.shared.getCategories(year: year, month: month) { result in
+            switch result {
+            case .success(let categories):
+                self.categories = categories
+            case .failure(let error):
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
     // MARK: - Fetch Receipts
     private func fetchReceipts() {
-        isLoading = true
         APIService.shared.fetchReceipts { result in
             DispatchQueue.main.async {
                 isLoading = false
