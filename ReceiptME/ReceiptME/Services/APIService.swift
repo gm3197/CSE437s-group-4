@@ -175,15 +175,15 @@ class APIService {
     
     // MARK: - Update Detailed Receipt
     /// Updates all fields in `ReceiptDetails`, including items, payment_method, merchant name, tax, etc.
-    func updateReceiptDetails(_ details: ReceiptDetails, completion: @escaping (Result<ReceiptDetails, Error>) -> Void) {
+    func updateReceiptItem(_ item: ReceiptItem, receipt_id: Int, completion: @escaping (Result<Void, Error>) -> Void) {
 //        print("Updating receipt details (b): \(details)\n")
-        guard let url = URL(string: "\(baseURL)/receipts/\(details.id)") else {
+        guard let url = URL(string: "\(baseURL)/receipts/\(receipt_id)/items/\(item.id)") else {
             completion(.failure(APIError.invalidURL))
             return
         }
         
         do {
-            let jsonData = try JSONEncoder().encode(details)
+            let jsonData = try JSONEncoder().encode(item)
             let request = createAuthorizedRequest(url: url,
                                                   method: "PATCH",
                                                   contentType: "application/json",
@@ -200,13 +200,8 @@ class APIService {
                     return
                 }
                 
-                do {
-//                    print("Raw response data:", String(data: data, encoding: .utf8) ?? "Invalid response")
-                    let updatedDetails = try JSONDecoder().decode(ReceiptDetails.self, from: data)
-                    completion(.success(updatedDetails))
-                } catch {
-                    completion(.failure(error))
-                }
+                completion(.success(()))
+
             }.resume()
         } catch { // prints error bc backend doesnt send any success message back -- functionality still works
             completion(.failure(error))
