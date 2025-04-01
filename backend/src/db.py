@@ -112,7 +112,7 @@ def get_receipt(receipt_id):
 			return None
 
 		cur.execute(
-			"SELECT id, description, price, bbox_left FROM receipt_items WHERE receipt_id = %s",
+			"SELECT id, description, price, category, bbox_left FROM receipt_items WHERE receipt_id = %s",
 			(receipt_id,)
 		)
 		items = cur.fetchall()
@@ -123,7 +123,8 @@ def get_receipt(receipt_id):
 				"id": item[0],
 				"description": item[1],
 				"price": round(item[2], 2),
-				"auto": True if item[3] is not None else False,
+                "category": item[3],
+				"auto": True if item[4] is not None else False,
 			})
 
 		return {
