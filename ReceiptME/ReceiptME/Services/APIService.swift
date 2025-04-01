@@ -97,7 +97,7 @@ class APIService {
             
             do {
                 let list = try JSONDecoder().decode(ReceiptList.self, from: data)
-                print("Receipt list data: \(list)")
+//                print("Receipt list data: \(list)")
                 completion(.success(list))
             } catch {
                 completion(.failure(error))
@@ -327,7 +327,7 @@ class APIService {
                 completion(.failure(APIError.noData))
                 return
             }
-            
+                                                   
             do {
                 let responseData = try JSONDecoder().decode(GetCategoriesResponse.self, from: data)
                 completion(.success(responseData.categories))

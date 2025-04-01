@@ -57,7 +57,7 @@ struct ReceiptItem: Codable, Identifiable {
     var category: Int?
 
     private enum CodingKeys: String, CodingKey {
-        case id, description, price // added id HERE
+        case id, description, price, category
     }
 
     init(from decoder: Decoder) throws {
@@ -68,6 +68,7 @@ struct ReceiptItem: Codable, Identifiable {
         
         self.description = try container.decodeIfPresent(String.self, forKey: .description) ?? "Unknown Item"
         self.price = try container.decode(Double.self, forKey: .price)
+        self.category = try container.decodeIfPresent(Int.self, forKey: .category) ?? nil
     }
     
     // Standard initializer for convenience.

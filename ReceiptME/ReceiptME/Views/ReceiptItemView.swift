@@ -9,6 +9,12 @@ struct ReceiptItemView: View {
     @State private var isEditing = true
     @State private var editedItemName: String
     @State private var editedItemPrice: String
+    @State private var editedItemCategoryID: Int? // PARAMETER OF RECEIPT ITEM
+    @State private var hasBeenEdited = false
+    
+    @State private var categories: [Category] = []
+    @State private var selectedCategoryID: Int?
+    @State private var selectedCategoryName: String = "Unknown Category"
 
     init(receiptId: Int, receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
         self.receiptId = receiptId
@@ -16,6 +22,7 @@ struct ReceiptItemView: View {
         self.saveAction = saveAction
         self._editedItemName = State(initialValue: receiptItem.wrappedValue.description)
         self._editedItemPrice = State(initialValue: String(format: "%.2f", receiptItem.wrappedValue.price))
+        self._editedItemCategoryID = State(initialValue: receiptItem.wrappedValue.category)
     }
 
     var body: some View {
@@ -57,6 +64,23 @@ struct ReceiptItemView: View {
                 .font(.system(.body, design: .rounded))
                 .padding(.horizontal)
             
+            
+            Picker("Select Category", selection: $selectedCategoryID) {
+                ForEach(categories, id: \.id) { category in
+                    Text(category.name).tag(category.id as Int?)
+                }
+            }
+            .onChange(of: selectedCategoryID) { newID in
+                if let newID = newID, let matchedCategory = categories.first(where: { $0.id == newID }) {
+                    selectedCategoryName = matchedCategory.name
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .padding(.horizontal)
+            .foregroundColor(.white)
+            
+            
+            
             Button("Save Changes") {
                 if commitChanges() {
                     saveAction() // update backend
@@ -65,10 +89,11 @@ struct ReceiptItemView: View {
             }
             .buttonStyle(SleekButtonStyle())
         }
-        .padding([.top, .bottom], 8)
+        .onAppear {
+            showCategories()
+        }
     }
     
-    // MARK: - Commit Changes
     private func commitChanges() -> Bool {
         guard let newPrice = Double(editedItemPrice) else {
             print("Failed to commit changes: price not convertible to Double.")
@@ -76,7 +101,36 @@ struct ReceiptItemView: View {
         }
         receiptItem.description = editedItemName
         receiptItem.price = newPrice
+        receiptItem.category = selectedCategoryID
         return true
     }
+    
+    private func showCategories() {
+        let viewModel = ReceiptViewModel()
+        
+        viewModel.getCategories(nil, month: nil) { result in // call function on an instance of viewModel
+            DispatchQueue.main.async {
+                switch result {
+                    case .success(let fetchedCategories):
+                        print("Got categories in receipt item view:\n\(fetchedCategories)")
+                        self.categories = fetchedCategories
+                    
+                    // Find current category based on receiptItem.category
+                    if let categoryID = receiptItem.category,
+                       let matchedCategory = fetchedCategories.first(where: { $0.id == categoryID }) {
+                        self.selectedCategoryID = matchedCategory.id
+                        self.selectedCategoryName = matchedCategory.name
+                    } else {
+                        self.selectedCategoryID = fetchedCategories.first?.id // Default to first category
+                        self.selectedCategoryName = fetchedCategories.first?.name ?? "No Category Selected"
+                    }
+                    case .failure(let error):
+                        print("Error retrieving categories: \(error)")
+                }
+            }
+            
+        }
+        
+    }
+    
 }
-

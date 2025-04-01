@@ -129,6 +129,25 @@ class ReceiptViewModel: ObservableObject {
     }
     
     
+    func getCategories(_ year: Int?, month: Int?, completion: @escaping (Result<[Category], Error>) -> Void) {
+        
+        APIService.shared.getCategories(year: year, month: month) {
+            result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let categories):
+                    print("Returned categories: \(categories)")
+                    completion(.success(categories))
+                case .failure(let error):
+                    completion(.failure(error))
+                
+                }
+            }
+        }
+        
+    }
+    
+    
     
     
 }
