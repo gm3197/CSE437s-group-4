@@ -26,6 +26,8 @@ struct ReceiptDetailView: View {
     // Items in the receipt
     @State private var editableItems: [ReceiptItem] = []
     
+    
+    
     // add receiptItem state var here:
 //    @State private var newItem = ReceiptItem(id: UUID(), description: "", price: 0.0) // initializing
     
@@ -75,7 +77,7 @@ struct ReceiptDetailView: View {
             } : nil,
             trailing: Button(isEditing ? "Save" : "Edit") {
                 if isEditing {
-                    saveEdits()
+                    saveMetadataEdits()
                     // REFRESH RECEIPT AFTER UPDATING
                     // Fetch the full details for this receipt
                     viewModel.fetchReceiptDetails(receiptId: receipt.id) { result in
@@ -97,6 +99,7 @@ struct ReceiptDetailView: View {
                 switch result {
                 case .success(let fetchedDetails):
                     self.details = fetchedDetails
+                    print("fetched details (I): \(fetchedDetails)")
                     setupEditableFields(with: fetchedDetails)
                 case .failure(let error):
                     print("Error fetching full details: \(error)")
@@ -183,7 +186,7 @@ extension ReceiptDetailView {
 //                    item_name: $editableItems[index].description,
 //                    item_price: $editableItems[index].price
                     receiptItem: $editableItems[index], // pass object instead of seperate items
-                    saveAction: saveEdits
+                    saveAction: saveItemEdits
                 )) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(editableItems[index].description)
@@ -265,10 +268,10 @@ extension ReceiptDetailView {
         setupEditableFields(with: details)
     }
     
-    private func saveEdits() {
+    private func saveMetadataEdits() {
         guard var details = details else { return }
         
-        print("detials in saveEdits func: \(details)\n")
+        print("detials in saveMetadataEdits func: \(details)\n")
         
         // Merchant name, Payment method, Clean
         details.merchant = editableMerchantName
@@ -292,6 +295,52 @@ extension ReceiptDetailView {
             self.details = updated
             
         }
+
+    }
+    
+    private func saveItemEdits() {
+        guard var updatedDetails = details else {
+            print("ERROR: No details available")
+            return
+        }
+        let originalItems = updatedDetails.items
+        print("PRE UPDATE details in saveItemEdits func: \(originalItems)\n")
+        
+
+        updatedDetails.items = editableItems
+        print("POST UPDATE details in saveItemEdits func: \(updatedDetails)\n")
+        
+        let changedItem = findChangedItems(originalItems: originalItems, updatedItems: editableItems)
+        
+        viewModel.updateReceiptItem(changedItem, receipt_id: updatedDetails.id) { updated in
+//            print("4. Completion handler reached with updated details")
+            DispatchQueue.main.async {
+//                self.details = updated
+//                self.editableItems = updated.items // idk
+//                print("5. UI has been updated")
+            }
+            
+        }
+        
+    }
+    
+    private func findChangedItems(originalItems: [ReceiptItem], updatedItems: [ReceiptItem]) -> ReceiptItem {
+        
+        // Create a dictionary of original items keyed by ID for faster lookup
+        let originalItemDict = Dictionary(uniqueKeysWithValues: originalItems.map { ($0.id, $0) })
+        
+        for updatedItem in updatedItems {
+            if let originalItem = originalItemDict[updatedItem.id] {
+                // Check if description or price has changed
+                if originalItem.description != updatedItem.description ||
+                   originalItem.price != updatedItem.price {
+                    return updatedItem
+                }
+            }
+        }
+        
+        print("ERROR: No changes in receipt items found")
+        return updatedItems[0]
     }
     
     // MARK: - UI Helpers
