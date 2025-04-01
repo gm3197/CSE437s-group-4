@@ -97,7 +97,7 @@ class APIService {
             
             do {
                 let list = try JSONDecoder().decode(ReceiptList.self, from: data)
-                print("Receipt list data: \(list)")
+//                print("Receipt list data: \(list)")
                 completion(.success(list))
             } catch {
                 completion(.failure(error))

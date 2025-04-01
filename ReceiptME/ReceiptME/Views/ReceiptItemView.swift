@@ -16,7 +16,7 @@ struct ReceiptItemView: View {
     @State private var isEditing = false
     @State private var editedItemName: String
     @State private var editedItemPrice: String
-    @State private var editedItemCategoryID: Int?
+    @State private var editedItemCategoryID: Int? // PARAMETER OF RECEIPT ITEM
     @State private var hasBeenEdited = false
     
     @State private var categories: [Category] = []
@@ -72,9 +72,15 @@ struct ReceiptItemView: View {
                 .keyboardType(.decimalPad)
                 .padding(.horizontal)
             
+            
             Picker("Select Category", selection: $selectedCategoryID) {
                 ForEach(categories, id: \.id) { category in
                     Text(category.name).tag(category.id as Int?)
+                }
+            }
+            .onChange(of: selectedCategoryID) { newID in
+                if let newID = newID, let matchedCategory = categories.first(where: { $0.id == newID }) {
+                    selectedCategoryName = matchedCategory.name
                 }
             }
             .pickerStyle(MenuPickerStyle())
@@ -142,18 +148,15 @@ struct ReceiptItemView: View {
                         print("Got categories in receipt item view:\n\(fetchedCategories)")
                         self.categories = fetchedCategories
                     
-                        if let categoryID = editedItemCategoryID,
-                           fetchedCategories.contains(where: { $0.id == categoryID }) {
-                            if let categoryID = receiptItem.category,
-                               let matchedCategory = fetchedCategories.first(where: { $0.id == categoryID }) {
-                                self.selectedCategoryName = matchedCategory.name
-                            } else {
-                                self.selectedCategoryName = "Unknown Category"
-                            }
-                        } else {
-                            self.selectedCategoryID = fetchedCategories.first?.id // Default to first category
-                        }
-                    
+                    // Find current category based on receiptItem.category
+                    if let categoryID = receiptItem.category,
+                       let matchedCategory = fetchedCategories.first(where: { $0.id == categoryID }) {
+                        self.selectedCategoryID = matchedCategory.id
+                        self.selectedCategoryName = matchedCategory.name
+                    } else {
+                        self.selectedCategoryID = fetchedCategories.first?.id // Default to first category
+                        self.selectedCategoryName = fetchedCategories.first?.name ?? "No Category Selected"
+                    }
                     case .failure(let error):
                         print("Error retrieving categories: \(error)")
                 }

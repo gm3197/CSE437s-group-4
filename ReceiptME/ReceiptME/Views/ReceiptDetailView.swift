@@ -95,7 +95,7 @@ struct ReceiptDetailView: View {
                 switch result {
                 case .success(let fetchedDetails):
                     self.details = fetchedDetails
-                    print("fetched details (I): \(fetchedDetails)")
+//                    print("fetched details (I): \(fetchedDetails)")
                     setupEditableFields(with: fetchedDetails)
                 case .failure(let error):
                     print("Error fetching full details: \(error)")
@@ -327,7 +327,7 @@ extension ReceiptDetailView {
             if let originalItem = originalItemDict[updatedItem.id] {
                 // Check if description or price has changed
                 if originalItem.description != updatedItem.description ||
-                   originalItem.price != updatedItem.price {
+                    originalItem.price != updatedItem.price  || originalItem.category != updatedItem.category {
                     return updatedItem
                 }
             }
