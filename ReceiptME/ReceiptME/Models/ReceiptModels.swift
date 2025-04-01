@@ -77,3 +77,22 @@ struct ReceiptItem: Codable, Identifiable {
         self.price = price
     }
 }
+
+// MARK: - Categories
+struct GetCategoriesResponse: Codable {
+    var categories: [Category]
+}
+
+struct Category: Codable, Identifiable {
+    var id: Int
+    var name: String
+    var monthly_goal: Double
+    var month_spend: Double
+}
+
+struct CreateCategoryRequest: Codable {
+    var name: String
+    var monthly_goal: Double
+}
+
+typealias UpdateCategoryRequest = CreateCategoryRequest

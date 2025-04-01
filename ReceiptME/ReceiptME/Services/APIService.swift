@@ -293,4 +293,80 @@ class APIService {
             completion(.success(()))
         }.resume()
     }
+    
+    // MARK: - Categories
+  
+    // set year and month to nil to get categories for current month
+    func getCategories(year: Int?, month: Int?, completion: @escaping (Result<[Category], Error>) -> Void) {
+        var url: URL
+        if year == nil && month == nil {
+            guard let defaultUrl = URL(string: "\(baseURL)/categories") else {
+                completion(.failure(APIError.invalidURL))
+                return
+            }
+            url = defaultUrl
+        } else if year != nil && month != nil {
+            guard let specificUrl = URL(string: "\(baseURL)/categories/\(year!)/\(month!)") else {
+                completion(.failure(APIError.invalidURL))
+                return
+            }
+            url = specificUrl
+        } else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        let request = createAuthorizedRequest(url: url, method: "GET")
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(APIError.noData))
+                return
+            }
+
+            do {
+                let responseData = try JSONDecoder().decode(GetCategoriesResponse.self, from: data)
+                completion(.success(responseData.categories))
+            } catch {
+                completion(.failure(error))
+            }
+        }.resume()
+    }
+    
+    func createCategory(name: String, spending_goal: Double, completion: @escaping (Result<Category, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/categories") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        do {
+            let jsonData = try JSONEncoder().encode(CreateCategoryRequest(name: name, monthly_goal: spending_goal))
+            let request = createAuthorizedRequest(url: url, method: "POST", contentType: "application/json", body: jsonData)
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let data = data else {
+                    completion(.failure(APIError.noData))
+                    return
+                }
+
+                do {
+                    let responseData = try JSONDecoder().decode(Category.self, from: data)
+                    completion(.success(responseData))
+                } catch {
+                    completion(.failure(error))
+                }
+            }.resume()
+        } catch {
+            completion(.failure(error))
+        }
+    }
 }
