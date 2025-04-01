@@ -154,7 +154,7 @@ extension ReceiptDetailView {
                         Spacer()
                         Text(String(format: "$%.2f", details.items.map({ item in
                             item.price
-                        }).reduce(0, +)))
+                        }).reduce(0, +) + details.tax))
                             .foregroundStyle(.black)
                             .font(.system(size: 18, weight: .bold))
                     }
