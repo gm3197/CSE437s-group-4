@@ -27,10 +27,6 @@ struct ReceiptDetailView: View {
     @State private var editableItems: [ReceiptItem] = []
     
     
-    
-    // add receiptItem state var here:
-//    @State private var newItem = ReceiptItem(id: UUID(), description: "", price: 0.0) // initializing
-    
     // A simple DateFormatter. Adjust to match your desired format.
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -271,7 +267,7 @@ extension ReceiptDetailView {
     private func saveMetadataEdits() {
         guard var details = details else { return }
         
-        print("detials in saveMetadataEdits func: \(details)\n")
+//        print("detials in saveMetadataEdits func: \(details)\n")
         
         // Merchant name, Payment method, Clean
         details.merchant = editableMerchantName
@@ -304,11 +300,9 @@ extension ReceiptDetailView {
             return
         }
         let originalItems = updatedDetails.items
-        print("PRE UPDATE details in saveItemEdits func: \(originalItems)\n")
-        
-
+//        print("PRE UPDATE details in saveItemEdits func: \(originalItems)\n")
         updatedDetails.items = editableItems
-        print("POST UPDATE details in saveItemEdits func: \(updatedDetails)\n")
+//        print("POST UPDATE details in saveItemEdits func: \(updatedDetails)\n")
         
         let changedItem = findChangedItems(originalItems: originalItems, updatedItems: editableItems)
         
@@ -338,7 +332,6 @@ extension ReceiptDetailView {
                 }
             }
         }
-        
         print("ERROR: No changes in receipt items found")
         return updatedItems[0]
     }

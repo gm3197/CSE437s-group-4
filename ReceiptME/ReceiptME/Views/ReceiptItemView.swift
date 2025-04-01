@@ -10,9 +10,6 @@ import Foundation
 
 struct ReceiptItemView: View {
     
-//    let item_id: UUID // id will never be mutable
-//    @Binding var item_name: String // Need @Binding so values are mutable
-//    @Binding var item_price: Double
     @Binding var receiptItem: ReceiptItem
     var saveAction: () -> Void // Closure (passing of function as a parameter) to trigger save
     
