@@ -16,7 +16,12 @@ struct ReceiptItemView: View {
     @State private var isEditing = false
     @State private var editedItemName: String
     @State private var editedItemPrice: String
+    @State private var editedItemCategoryID: Int?
     @State private var hasBeenEdited = false
+    
+    @State private var categories: [Category] = []
+    @State private var selectedCategoryID: Int?
+    @State private var selectedCategoryName: String = "Unknown Category"
     
     init(receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) { // using wrappers instead if @ declaration -- allows for incremental updates to State vars (vs immediate updates)
         // initializes with values from @Binding (indicated by underscore var prefix)
@@ -24,6 +29,7 @@ struct ReceiptItemView: View {
         self.saveAction = saveAction
         self._editedItemName = State(initialValue: receiptItem.wrappedValue.description)
         self._editedItemPrice = State(initialValue: String(format: "%.2f", receiptItem.wrappedValue.price))
+        self._editedItemCategoryID = State(initialValue: receiptItem.wrappedValue.category)
     }
     
     var body: some View {
@@ -46,6 +52,7 @@ struct ReceiptItemView: View {
                         // Reset to original values
                         editedItemName = receiptItem.description
                         editedItemPrice = String(format: "%.2f", receiptItem.price)
+                        
                     }
                     isEditing.toggle()
                 }
@@ -65,6 +72,17 @@ struct ReceiptItemView: View {
                 .keyboardType(.decimalPad)
                 .padding(.horizontal)
             
+            Picker("Select Category", selection: $selectedCategoryID) {
+                ForEach(categories, id: \.id) { category in
+                    Text(category.name).tag(category.id as Int?)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .padding(.horizontal)
+            .foregroundColor(.white)
+            
+            
+            
             Button("Save Changes") {
                 print("Commiting changes (a)")
                 if commitChanges() {
@@ -78,6 +96,9 @@ struct ReceiptItemView: View {
             .background(Color.green)
             .cornerRadius(8)
         }
+        .onAppear {
+            showCategories()
+        }
     }
     
     
@@ -90,6 +111,11 @@ struct ReceiptItemView: View {
             Text(receiptItem.price == 0.0 ? "Price Not Set" : String(format: "$%.2f", receiptItem.price))
                 .font(.title2)
                 .foregroundColor(.white.opacity(0.8))
+            
+            Text(selectedCategoryName)
+            .font(.title3)
+            .foregroundColor(.white.opacity(0.7))
+            .italic()
         }
         .padding()
     }
@@ -102,7 +128,41 @@ struct ReceiptItemView: View {
         }
         receiptItem.description = editedItemName
         receiptItem.price = newPrice
+        receiptItem.category = selectedCategoryID
         return true
     }
     
+    private func showCategories() {
+        let viewModel = ReceiptViewModel()
+        
+        viewModel.getCategories(nil, month: nil) { result in // call function on an instance of viewModel
+            DispatchQueue.main.async {
+                switch result {
+                    case .success(let fetchedCategories):
+                        print("Got categories in receipt item view:\n\(fetchedCategories)")
+                        self.categories = fetchedCategories
+                    
+                        if let categoryID = editedItemCategoryID,
+                           fetchedCategories.contains(where: { $0.id == categoryID }) {
+                            if let categoryID = receiptItem.category,
+                               let matchedCategory = fetchedCategories.first(where: { $0.id == categoryID }) {
+                                self.selectedCategoryName = matchedCategory.name
+                            } else {
+                                self.selectedCategoryName = "Unknown Category"
+                            }
+                        } else {
+                            self.selectedCategoryID = fetchedCategories.first?.id // Default to first category
+                        }
+                    
+                    case .failure(let error):
+                        print("Error retrieving categories: \(error)")
+                }
+            }
+            
+        }
+        
+    }
+    
 }
+
+

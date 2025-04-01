@@ -328,7 +328,7 @@ class APIService {
                 return
             }
 
-            do {
+            do { // will return list of categories w id, name
                 let responseData = try JSONDecoder().decode(GetCategoriesResponse.self, from: data)
                 completion(.success(responseData.categories))
             } catch {
