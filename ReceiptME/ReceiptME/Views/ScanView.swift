@@ -1,8 +1,11 @@
 import SwiftUI
 
 struct ScanView: View {
-    @State private var showImagePicker = false
-    @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
+    @State private var showCameraImagePicker = false
+    @State private var showPhotoLibraryImagePicker = false
+    @State private var cameraSourceType: UIImagePickerController.SourceType = .camera
+    @State private var photoLibrarySourceType: UIImagePickerController.SourceType = .photoLibrary
+    
     @State private var selectedImage: UIImage?
     @State private var isUploading = false
     @State private var isUploadButtonHidden = false
@@ -10,6 +13,7 @@ struct ScanView: View {
     @State private var errorMessage: String?
     
     @State private var navigationPath = NavigationPath()
+    @AppStorage("fetch_receipts") var hasFetched: Bool?
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -55,8 +59,12 @@ struct ScanView: View {
                         // 4) Buttons Row (Camera / Photo Library)
                         HStack(spacing: 20) {
                             Button(action: {
-                                sourceType = .camera
-                                showImagePicker = true
+                                cameraSourceType = .camera
+                                DispatchQueue.main.async {
+                                        showCameraImagePicker = true
+                                    }
+                                
+//                                showImagePicker = true
                                 isUploadButtonHidden = false
                                 uploadResult = nil
                                 errorMessage = nil
@@ -68,8 +76,12 @@ struct ScanView: View {
                             .buttonStyle(SleekButtonStyle())
                             
                             Button(action: {
-                                sourceType = .photoLibrary
-                                showImagePicker = true
+                                photoLibrarySourceType = .photoLibrary
+                                DispatchQueue.main.async {
+                                        showPhotoLibraryImagePicker = true
+                                    }
+
+//                                showImagePicker = true
                                 isUploadButtonHidden = false
                                 uploadResult = nil
                                 errorMessage = nil
@@ -130,8 +142,11 @@ struct ScanView: View {
             .navigationDestination(for: Int.self) { receiptId in
                 ReceiptDetailWrapper(receiptId: receiptId)
             }
-            .sheet(isPresented: $showImagePicker) {
-                ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
+            .sheet(isPresented: $showCameraImagePicker) {
+                ImagePicker(selectedImage: $selectedImage, sourceType: cameraSourceType)
+            }
+            .sheet(isPresented: $showPhotoLibraryImagePicker) {
+                ImagePicker(selectedImage: $selectedImage, sourceType: photoLibrarySourceType)
             }
         } // end NavigationStack
     }
@@ -144,7 +159,18 @@ struct ScanView: View {
         isUploadButtonHidden = true // hide button so users cant double upload
         
         // If you want rotation or image fixes, do that here
-        let imageToUpload = image
+        let imageToUpload: UIImage
+        
+        if showCameraImagePicker { // idt need this...
+            print("Uploading pic from camera")
+            imageToUpload = image
+        } else if showPhotoLibraryImagePicker {
+            print("Uploading pic from photo library")
+            imageToUpload = image
+        } else {
+            print("Uploading pic without assigned source type")
+            imageToUpload = image
+        }
         
         APIService.shared.uploadReceipt(image: imageToUpload) { result in
             DispatchQueue.main.async {
@@ -152,6 +178,8 @@ struct ScanView: View {
                 switch result {
                 case .success(let response):
                     uploadResult = response
+                    hasFetched = false // for auto-refresh dashboardView onAppear
+                    
                     // navigate if success
                     if response.success, let receipt_id = response.receipt_id {
                         navigationPath.append(receipt_id)
@@ -187,7 +215,7 @@ struct SleekButtonStyle: ButtonStyle {
     
     func rotateImage(image: UIImage, clockwise: Bool) -> UIImage {
         // Determine the rotation angle in radians
-        let rotationAngle = clockwise ? CGFloat.pi/2 : -CGFloat.pi/2
+        let rotationAngle = clockwise ? CGFloat.pi/4 : -CGFloat.pi/4
         
         // Calculate the size of the rotated image
         let size = CGSize(width: image.size.height, height: image.size.width)
@@ -220,15 +248,14 @@ struct SleekButtonStyle: ButtonStyle {
 //            if imageOrientation == .up {
 //                return self
 //            }
-//            
+//
 //            // Create a context to draw the correctly oriented image
 //            UIGraphicsBeginImageContextWithOptions(size, false, scale)
 //            draw(in: CGRect(origin: .zero, size: size))
-//            
+//
 //            let normalizedImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
 //            UIGraphicsEndImageContext()
-//            
+//
 //            return normalizedImage ?? self
 //        }
 //    }
-

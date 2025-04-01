@@ -70,6 +70,7 @@ class APIService {
             
             do {
                 let result = try JSONDecoder().decode(ReceiptScanResult.self, from: data)
+                print("Receipt scan result data: \(result)")
                 completion(.success(result))
             } catch {
                 completion(.failure(error))
@@ -96,6 +97,7 @@ class APIService {
             
             do {
                 let list = try JSONDecoder().decode(ReceiptList.self, from: data)
+                print("Receipt list data: \(list)")
                 completion(.success(list))
             } catch {
                 completion(.failure(error))
@@ -166,6 +168,8 @@ class APIService {
                     completion(.success(updatedReceipt))
                 } catch {
                     completion(.failure(error))
+                    
+                    
                 }
             }.resume()
         } catch {
@@ -176,6 +180,7 @@ class APIService {
     // MARK: - Update Detailed Receipt
     /// Updates all fields in `ReceiptDetails`, including items, payment_method, merchant name, tax, etc.
     func updateReceiptDetails(_ details: ReceiptDetails, completion: @escaping (Result<ReceiptDetails, Error>) -> Void) {
+//        print("Updating receipt details (b): \(details)\n")
         guard let url = URL(string: "\(baseURL)/receipts/\(details.id)") else {
             completion(.failure(APIError.invalidURL))
             return
@@ -187,8 +192,8 @@ class APIService {
                                                   method: "PATCH",
                                                   contentType: "application/json",
                                                   body: jsonData)
-            
             URLSession.shared.dataTask(with: request) { data, response, error in
+//                print("Data object? : \(data)")
                 if let error = error {
                     completion(.failure(error))
                     return
@@ -200,15 +205,73 @@ class APIService {
                 }
                 
                 do {
+//                    print("Raw response data:", String(data: data, encoding: .utf8) ?? "Invalid response")
                     let updatedDetails = try JSONDecoder().decode(ReceiptDetails.self, from: data)
                     completion(.success(updatedDetails))
                 } catch {
                     completion(.failure(error))
                 }
             }.resume()
-        } catch {
+        } catch { // prints error bc backend doesnt send any success message back -- functionality still works
             completion(.failure(error))
         }
+    }
+    
+    ///
+    // MARK: - Update Receipt Item
+    func updateReceiptItem(_ item: ReceiptItem, receipt_id: Int, completion: @escaping (Result<Void, Error>) -> Void) {
+//        print("Updating receipt details (b): \(details)\n")
+
+
+//        print("I. APIService starting updateReceiptDetails")
+//        print(" --> with the following details: \(details)\n")
+        guard let url = URL(string: "\(baseURL)/receipts/\(receipt_id)/items/\(item.id)") else {
+//            print("II. Invalid URL error")
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        do {
+            let jsonData = try JSONEncoder().encode(item)
+            let request = createAuthorizedRequest(url: url,
+                                                  method: "PATCH",
+                                                  contentType: "application/json",
+                                                  body: jsonData)
+            print("III. About to start URLSession task")
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                print("III. About to start URLSession task")
+                
+                if let error = error {
+                    print("V. Network error: \(error)")
+                    completion(.failure(error))
+                    return
+                }
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("VI. HTTP Status: \(httpResponse.statusCode)")
+                } // new
+                
+                guard let data = data else {
+                    print("VII. No data received") // if failing here
+                    
+                    print("VIII. Returning success with original details due to no data")
+//                    completion(.success(details))
+                    
+                    completion(.failure(APIError.noData))
+                    return
+                }
+                print("IX. Raw response data: \(String(data: data, encoding: .utf8) ?? "Invalid response")")
+                
+                
+            completion(.success(()))
+
+            }.resume()
+                
+                print("IV. URLSession task started")
+                
+            } catch { // prints error bc backend doesnt send any success message back -- functionality still works
+                print("XIV. JSON encoding error: \(error)")
+                completion(.failure(error))
+            }
     }
     
     // MARK: - Delete Receipt

@@ -11,10 +11,7 @@ import GoogleSignIn
 import GoogleSignInSwift
 
 struct AuthView: View {
-    @State private var email: String = ""
-    @State private var password: String = ""
-    @State private var isSignIn: Bool = true        // sign in vs sign up
-    @State private var isAuthenticated = false      // to redirect to home page
+    @State private var isAuthenticated = false
 
     @AppStorage("user_permanent_token") var backend_token: String?
     @AppStorage("user_email") var email_: String?
@@ -23,8 +20,6 @@ struct AuthView: View {
         Group {
             if isAuthenticated {
                 ContentView()
-                // If a token exists, you can also check that here and skip login:
-                // } else if backend_token != nil { ContentView() }
             } else {
                 NavigationStack {
                     ZStack {
@@ -37,34 +32,51 @@ struct AuthView: View {
                         .ignoresSafeArea()
 
                         // MARK: - Main VStack
-                        VStack(spacing: 30) {
-                            // MARK: - Title
-                            Text("ReceiptME")
-                                .font(.system(size: 48, weight: .heavy, design: .rounded))
+                        VStack {
+                            // Push content away from top edge
+                            Spacer().frame(height: 60)
+
+                            // MARK: - Logo Image
+                            Image("AppImage")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 110, height: 110)
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            Spacer().frame(height: 60)
+                            // MARK: - Welcome Title
+                            Text("Welcome to ReceiptME!")
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .shadow(color: .black.opacity(0.25), radius: 4, x: 2, y: 2)
-                                .padding(.top, 50)
-
-                            // MARK: - Subtitle / Instructions
-                            Text("Keep track of your receipts effortlessly.\nSign in to get started!")
+                                .padding(.top, 16)
+                            Spacer().frame(height: 60)
+                            // MARK: - Instructions
+                            Text("Manage and organize your receipts effortlessly. Sign in with your Google account to get started.")
                                 .font(.system(size: 18, weight: .medium, design: .rounded))
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(.white.opacity(0.9))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 30)
-                                .padding(.top, 20)
-
+                                .padding(.top, 8)
+                            Spacer().frame(height: 60)
 
                             // MARK: - Google Sign-In Button
                             GoogleSignInButton(action: {
                                 signInWithGoogle()
                             })
-                            .padding(.top, 20)
-                            .frame(width: 200, height: 100, alignment: .center)
+                            .frame(width: 250, height: 50)
                             .shadow(color: .black.opacity(0.15), radius: 4, x: 2, y: 2)
 
+                            .clipShape(RoundedRectangle(cornerRadius: 60, style: .continuous))
+
+                            // Push Terms text to the bottom
                             Spacer()
+
+                            // MARK: - Terms & Conditions Notice
+                            Text("By signing in, you agree to our Terms & Conditions.")
+                                .font(.footnote)
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.bottom, 30)
                         }
-                        .padding(.bottom, 50)
                     }
                     .navigationBarHidden(true)
                 }
@@ -87,7 +99,6 @@ extension AuthView {
                 return
             }
 
-            // Log user info for debug
             let user = result.user
             let userId = user.userID ?? "No ID found"
             let userEmail = user.profile?.email ?? "No email found"
@@ -98,10 +109,10 @@ extension AuthView {
             print("Email: \(userEmail)")
             print("Name: \(userName)")
 
-            // assign email for access in settings
+            // Store user email
             email_ = userEmail
-            
-            // Access ID token for backend
+
+            // Retrieve Google ID token for backend
             result.user.refreshTokensIfNeeded { refreshedUser, error in
                 guard let refreshedUser = refreshedUser, error == nil,
                       let idToken = refreshedUser.idToken else {
@@ -110,7 +121,7 @@ extension AuthView {
                 sendTokenToBackend(idToken: idToken.tokenString)
             }
 
-            // Toggle to move to main content
+            // Dismiss auth screen
             isAuthenticated = true
         }
     }
@@ -139,8 +150,6 @@ extension AuthView {
                 let sessionToken = try decoder.decode(LoginResponse.self, from: unwrappedData)
                 print("Backend data: \(sessionToken.session)")
                 print("Backend Response: \(String(describing: response))")
-
-                // Save the backend token
                 backend_token = sessionToken.session
                 print("Got backend token: \(backend_token ?? "None")")
             } catch {
@@ -152,12 +161,6 @@ extension AuthView {
 }
 
 // MARK: - Helpers
-struct AuthView_Previews: PreviewProvider {
-    static var previews: some View {
-        AuthView()
-    }
-}
-
 func getRootViewController() -> UIViewController? {
     guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
           let window = scene.windows.first,
@@ -170,4 +173,11 @@ func getRootViewController() -> UIViewController? {
 func signOutFromGoogle(sender: Any) {
     GIDSignIn.sharedInstance.signOut()
     print("User signed out of Google account")
+}
+
+// MARK: - Previews
+struct AuthView_Previews: PreviewProvider {
+    static var previews: some View {
+        AuthView()
+    }
 }

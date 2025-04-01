@@ -76,7 +76,7 @@ struct ReceiptDetailWrapper: View {
                     // Create Receipt with the calculated total
                     self.receipt = Receipt(
                         id: details.id,
-                        merchant: details.merchant.name,
+                        merchant: details.merchant,
                         date: details.date,
                         total: calculatedTotal
                     )
