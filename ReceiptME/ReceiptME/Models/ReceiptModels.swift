@@ -31,6 +31,7 @@ struct Receipt: Codable, Identifiable {
     var merchant: String
     var date: String
     var total: Double
+    var clean: Bool?
 }
 
 // MARK: - Detailed Receipt

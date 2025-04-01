@@ -1,19 +1,12 @@
-//
-//  ReceiptItemView.swift
-//  ReceiptME
-//
-//  Created by Jake Teitelbaum on 3/27/25.
-//
-
 import SwiftUI
 import Foundation
 
 struct ReceiptItemView: View {
-    
     @Binding var receiptItem: ReceiptItem
-    var saveAction: () -> Void // Closure (passing of function as a parameter) to trigger save
-    
-    @State private var isEditing = false
+    @State var receiptId: Int
+    var saveAction: () -> Void // Closure to trigger save
+
+    @State private var isEditing = true
     @State private var editedItemName: String
     @State private var editedItemPrice: String
     @State private var editedItemCategoryID: Int? // PARAMETER OF RECEIPT ITEM
@@ -22,54 +15,53 @@ struct ReceiptItemView: View {
     @State private var categories: [Category] = []
     @State private var selectedCategoryID: Int?
     @State private var selectedCategoryName: String = "Unknown Category"
-    
-    init(receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) { // using wrappers instead if @ declaration -- allows for incremental updates to State vars (vs immediate updates)
-        // initializes with values from @Binding (indicated by underscore var prefix)
+
+    init(receiptId: Int, receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
+        self.receiptId = receiptId
         self._receiptItem = receiptItem
         self.saveAction = saveAction
         self._editedItemName = State(initialValue: receiptItem.wrappedValue.description)
         self._editedItemPrice = State(initialValue: String(format: "%.2f", receiptItem.wrappedValue.price))
         self._editedItemCategoryID = State(initialValue: receiptItem.wrappedValue.category)
     }
-    
+
     var body: some View {
-        VStack(spacing: 20) {
-            if isEditing {
-                editingView
-            } else {
-                displayView
-            }
+        ZStack {
+            // 1) Background gradient (cover the whole screen)
+            LinearGradient(
+                gradient: Gradient(colors: [.pink, .purple, .blue]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+                .ignoresSafeArea()
+            
+            editingView
+                .background(cardBackground)
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 2, y: 2)
         }
-        .padding()
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(12)
-        .shadow(radius: 5)
         .navigationTitle("Item Details")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(isEditing ? "Cancel" : "Edit") {
-                    if isEditing {
-                        // Reset to original values
-                        editedItemName = receiptItem.description
-                        editedItemPrice = String(format: "%.2f", receiptItem.price)
-                        
-                    }
-                    isEditing.toggle()
-                }
-                .foregroundColor(.black)
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
     }
     
+    // MARK: - Background Style for the card
+    private var cardBackground: some View {
+        Color.white.opacity(0.15)
+    }
+    
+    // MARK: - Editing View
     private var editingView: some View {
-        VStack(spacing: 16){
+        VStack(spacing: 16) {
+            AuthenticatedImage(url: "\(APIService.shared.baseURL)/receipts/\(receiptId)/items/\(_receiptItem.id)/scan.png")
             TextField("Item Name", text: $editedItemName)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                .font(.system(.body, design: .rounded))
                 .padding(.horizontal)
             
             TextField("Price", text: $editedItemPrice)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .keyboardType(.decimalPad)
+                .font(.system(.body, design: .rounded))
                 .padding(.horizontal)
             
             
@@ -90,46 +82,21 @@ struct ReceiptItemView: View {
             
             
             Button("Save Changes") {
-                print("Commiting changes (a)")
                 if commitChanges() {
                     saveAction() // update backend
-                    isEditing = false // reset flag
+                    isEditing = false
                 }
             }
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding()
-            .background(Color.green)
-            .cornerRadius(8)
+            .buttonStyle(SleekButtonStyle())
         }
         .onAppear {
             showCategories()
         }
     }
     
-    
-    private var displayView: some View {
-        VStack(spacing: 12) {
-            Text(receiptItem.description.isEmpty ? "No name available" : receiptItem.description)
-                .font(.title)
-                .foregroundColor(.white)
-            
-            Text(receiptItem.price == 0.0 ? "Price Not Set" : String(format: "$%.2f", receiptItem.price))
-                .font(.title2)
-                .foregroundColor(.white.opacity(0.8))
-            
-            Text(selectedCategoryName)
-            .font(.title3)
-            .foregroundColor(.white.opacity(0.7))
-            .italic()
-        }
-        .padding()
-    }
-    
-    
     private func commitChanges() -> Bool {
         guard let newPrice = Double(editedItemPrice) else {
-            print("Failed to commit changes")
+            print("Failed to commit changes: price not convertible to Double.")
             return false
         }
         receiptItem.description = editedItemName
@@ -167,5 +134,3 @@ struct ReceiptItemView: View {
     }
     
 }
-
-
