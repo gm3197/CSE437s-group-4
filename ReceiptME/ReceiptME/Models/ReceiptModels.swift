@@ -39,7 +39,6 @@ struct ReceiptDetails: Codable, Identifiable {
     var owner_id: Int
     var clean: Bool
     var date: String
-//    var merchant: Merchant
     var merchant: String
     var merchant_address: String
     var merchant_domain: String
@@ -48,31 +47,52 @@ struct ReceiptDetails: Codable, Identifiable {
     var tax: Double
 }
 
-//struct Merchant: Codable { // don't need this bc only one item now..
-//    var name: String
-//}
 
 struct ReceiptItem: Codable, Identifiable {
     // This id is generated locally and won't be decoded from the JSON.
-    var id: UUID = UUID()
+    var id: Int // UUID = UUID() // HAVE TO GET + REASSIGN THIS VALUE WHEN RECEIPT ITEM IS CREATED
     var description: String
     var price: Double
     //var category: String?
 
     private enum CodingKeys: String, CodingKey {
-        case description, price
+        case id, description, price // added id HERE
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         // Decode name as optional; if missing, use "Unknown Item"
+        
+        self.id = try container.decodeIfPresent(Int.self, forKey: .id) ?? 0
+        
         self.description = try container.decodeIfPresent(String.self, forKey: .description) ?? "Unknown Item"
         self.price = try container.decode(Double.self, forKey: .price)
     }
     
     // Standard initializer for convenience.
-    init(description: String, price: Double) {
+    init(description: String, price: Double, id: Int) {
+        // NEW
+        self.id = id
         self.description = description
         self.price = price
     }
 }
+
+// MARK: - Categories
+struct GetCategoriesResponse: Codable {
+    var categories: [Category]
+}
+
+struct Category: Codable, Identifiable {
+    var id: Int
+    var name: String
+    var monthly_goal: Double
+    var month_spend: Double
+}
+
+struct CreateCategoryRequest: Codable {
+    var name: String
+    var monthly_goal: Double
+}
+
+typealias UpdateCategoryRequest = CreateCategoryRequest
