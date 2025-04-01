@@ -31,6 +31,7 @@ struct Receipt: Codable, Identifiable {
     var merchant: String
     var date: String
     var total: Double
+    var clean: Bool?
 }
 
 // MARK: - Detailed Receipt
@@ -53,7 +54,7 @@ struct ReceiptItem: Codable, Identifiable {
     var id: Int // UUID = UUID() // HAVE TO GET + REASSIGN THIS VALUE WHEN RECEIPT ITEM IS CREATED
     var description: String
     var price: Double
-    //var category: String?
+    var category: Int?
 
     private enum CodingKeys: String, CodingKey {
         case id, description, price // added id HERE

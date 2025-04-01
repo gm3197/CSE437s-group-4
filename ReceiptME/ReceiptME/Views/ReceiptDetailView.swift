@@ -49,18 +49,13 @@ struct ReceiptDetailView: View {
             if isEditing {
                 editForm
             } else {
-                ScrollView {
-                    if let details = details {
-                        detailCard(for: details)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 20)
-                            .padding(.bottom, 40)
-                    } else {
-                        // If details haven't loaded or there's an error
-                        ProgressView("Loading details...")
-                            .foregroundColor(.white)
-                            .padding()
-                    }
+                if let details = details {
+                    detailCard(for: details)
+                } else {
+                    // If details haven't loaded or there's an error
+                    ProgressView("Loading details...")
+                        .foregroundColor(.white)
+                        .padding()
                 }
             }
         }
@@ -110,24 +105,66 @@ extension ReceiptDetailView {
     
     // MARK: Non-Editing State
     private func detailCard(for details: ReceiptDetails) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // ERROR: The compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
-            // SOLN: Create subviews and call them within this VStack
-    
-            merchantSection(details)
-            dateSection(details)
-            totalSection(details)
-            paymentMethodSection(details)
-            taxSection(details)
-            cleanSection(details)
-            itemsSection()
-            additionalInfoSection(details)
-            
-        } // end of vstack
-        .padding(20)
-        .background(Color.white.opacity(0.15))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.2), radius: 6, x: 3, y: 4)
+        List {
+            Section {
+                ForEach(editableItems.indices, id: \.self) { index in
+                    NavigationLink(destination: ReceiptItemView(
+                        receiptItem: $editableItems[index], // pass object instead of seperate items
+                        saveAction: saveItemEdits
+                    )) {
+                        HStack(alignment: .top, spacing: 8) {
+                            Text(editableItems[index].description)
+                                .lineLimit(nil)
+                            Spacer()
+                            Text(String(format: "$%.2f", editableItems[index].price))
+                        }
+                    }
+                }
+            } header: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(details.merchant)
+                        .font(.title)
+                        .foregroundStyle(.black)
+                    HStack(alignment: .center) {
+                        Text(details.date)
+                            .font(.caption)
+                            .foregroundStyle(.black)
+                        Spacer()
+                        Text(details.payment_method)
+                            .font(.caption)
+                            .foregroundStyle(.black)
+                    }
+                }
+                    .padding(.bottom, 8)
+            } footer: {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .center) {
+                        Text("Tax")
+                            .foregroundStyle(.black)
+                            .font(.system(size: 18))
+                        Spacer()
+                        Text(String(format: "$%.2f", details.tax))
+                            .foregroundStyle(.black)
+                            .font(.system(size: 18))
+                    }
+                    HStack(alignment: .center) {
+                        Text("Total")
+                            .foregroundStyle(.black)
+                            .font(.system(size: 18, weight: .bold))
+                        Spacer()
+                        Text(String(format: "$%.2f", details.items.map({ item in
+                            item.price
+                        }).reduce(0, +)))
+                            .foregroundStyle(.black)
+                            .font(.system(size: 18, weight: .bold))
+                    }
+                }
+                .padding(.top, 8)
+            }
+                .listRowBackground(Color.white.opacity(0.15))
+                .textCase(nil)
+        }
+            .scrollContentBackground(.hidden) // iOS 16+ to let the gradient show through
     }
     
     // subviews that will be called wihtin detailCard VStack
@@ -176,28 +213,6 @@ extension ReceiptDetailView {
     private func itemsSection() -> some View {
         VStack {
             infoSectionHeader("Items")
-            ForEach(editableItems.indices, id: \.self) { index in
-                NavigationLink(destination: ReceiptItemView(
-//                    item_id: $editableItems[index].id,
-//                    item_name: $editableItems[index].description,
-//                    item_price: $editableItems[index].price
-                    receiptItem: $editableItems[index], // pass object instead of seperate items
-                    saveAction: saveItemEdits
-                )) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(editableItems[index].description)
-                            .font(.system(.body, design: .rounded))
-                            .foregroundColor(.white)
-                        Text(String(format: "$%.2f", editableItems[index].price))
-                            .font(.system(.footnote, design: .rounded))
-                            .foregroundColor(.white.opacity(0.9))
-                    }
-                    .padding()
-                    .background(Color.white.opacity(0.15))
-                    .cornerRadius(8)
-                }
-                Divider().background(Color.white.opacity(0.2))
-            }
         }
     }
 
@@ -226,8 +241,21 @@ extension ReceiptDetailView {
 
     // MARK: Editing State
     private var editForm: some View {
-        Form {
-                Section(header: Text("Edit Receipt").font(.system(.headline, design: .rounded))) {
+        VStack {
+            Form {
+                Section(header: Text("Original Scan")) {
+                    ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                        ScrollViewReader { sp in
+                            AuthenticatedImage(url: "\(APIService.shared.baseURL)/receipts/\(receipt.id)/scan.png")
+                                .onLoad {
+                                    sp.scrollTo(0, anchor: .center)
+                                }
+                                .id(0)
+                        }
+                    }
+                }
+                .frame(maxHeight: 300)
+                Section(header: Text("Edit Receipt")) {
                     TextField("Merchant Name", text: $editableMerchantName)
                         .font(.system(.body, design: .rounded))
                     
@@ -236,11 +264,12 @@ extension ReceiptDetailView {
                                 
                 }
             }
-        .scrollContentBackground(.hidden)
-        .background(Color.white.opacity(0.15))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.15), radius: 5, x: 2, y: 4)
-        .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Color.white.opacity(0.15))
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.15), radius: 5, x: 2, y: 4)
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
     
     // MARK: Editable Fields Management

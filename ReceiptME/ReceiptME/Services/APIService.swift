@@ -327,7 +327,7 @@ class APIService {
                 completion(.failure(APIError.noData))
                 return
             }
-
+            
             do {
                 let responseData = try JSONDecoder().decode(GetCategoriesResponse.self, from: data)
                 completion(.success(responseData.categories))
@@ -336,7 +336,7 @@ class APIService {
             }
         }.resume()
     }
-    
+
     func createCategory(name: String, spending_goal: Double, completion: @escaping (Result<Category, Error>) -> Void) {
         guard let url = URL(string: "\(baseURL)/categories") else {
             completion(.failure(APIError.invalidURL))
