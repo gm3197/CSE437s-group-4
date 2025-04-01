@@ -77,9 +77,9 @@ def create_category():
 
 	return {
 		"id": category_id,
-        "name": req_data["name"],
-        "monthly_goal": req_data["monthly_goal"],
-        "month_spend": 0.0,
+		"name": req_data["name"],
+		"monthly_goal": req_data["monthly_goal"],
+		"month_spend": 0.0,
 	}
 
 
@@ -190,7 +190,9 @@ def edit_receipt_item(receipt_id, item_id):
 		bottle.response.status = 400
 		return "Bad request"
 
-	db.update_receipt_item(item_id, req_data["price"], req_data["description"])
+	category_id = req_data["category"] if "category" in req_data else None
+
+	db.update_receipt_item(item_id, req_data["price"], req_data["description"], category_id)
 
 	bottle.response.status = 200
 	return
