@@ -109,6 +109,7 @@ extension ReceiptDetailView {
             Section {
                 ForEach(editableItems.indices, id: \.self) { index in
                     NavigationLink(destination: ReceiptItemView(
+                        receiptId: details.id,
                         receiptItem: $editableItems[index], // pass object instead of seperate items
                         saveAction: saveItemEdits
                     )) {
