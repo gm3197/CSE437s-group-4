@@ -227,4 +227,36 @@ class APIService {
             completion(.success(()))
         }.resume()
     }
+    
+    func getReceiptItemCroppedImage(receiptId: Int, itemId: Int, completion: @escaping (Result<Data, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/receipts/\(receiptId)/items/\(itemId)/scan.png") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        let request = createAuthorizedRequest(url: url, method: "GET")
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+        
+            guard let response = response else {
+                completion(.failure(APIError.noData))
+                return
+            }
+            
+            if response.mimeType != "image/png" {
+                completion(.failure(APIError.noData))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(APIError.noData))
+                return
+            }
+        
+            completion(.success(data))
+        }.resume()
+    }
 }

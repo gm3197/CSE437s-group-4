@@ -100,7 +100,7 @@ class ReceiptViewModel: ObservableObject {
     /// Sends updated ReceiptDetails to the server, and returns the updated details on success.
     func updateReceiptDetails(_ details: ReceiptDetails, completion: @escaping (ReceiptDetails) -> Void) {
         print("Updating receipt details: \(details)")
-        
+       /*
         APIService.shared.updateReceiptDetails(details) { result in
             DispatchQueue.main.async {
                 switch result {
@@ -110,6 +110,6 @@ class ReceiptViewModel: ObservableObject {
                     print("Error updating receipt details: \(error)")
                 }
             }
-        }
+        }*/
     }
 }

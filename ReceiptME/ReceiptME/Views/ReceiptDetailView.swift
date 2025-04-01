@@ -227,8 +227,21 @@ extension ReceiptDetailView {
 
     // MARK: Editing State
     private var editForm: some View {
-        Form {
-                Section(header: Text("Edit Receipt").font(.system(.headline, design: .rounded))) {
+        VStack {
+            Form {
+                Section(header: Text("Original Scan")) {
+                    ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                        ScrollViewReader { sp in
+                            AuthenticatedImage(url: "\(APIService.shared.baseURL)/receipts/\(receipt.id)/scan.png")
+                                .onLoad {
+                                    sp.scrollTo(0, anchor: .center)
+                                }
+                                .id(0)
+                        }
+                    }
+                }
+                .frame(maxHeight: 300)
+                Section(header: Text("Edit Receipt")) {
                     TextField("Merchant Name", text: $editableMerchantName)
                         .font(.system(.body, design: .rounded))
                     
@@ -237,11 +250,12 @@ extension ReceiptDetailView {
                                 
                 }
             }
-        .scrollContentBackground(.hidden)
-        .background(Color.white.opacity(0.15))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.15), radius: 5, x: 2, y: 4)
-        .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Color.white.opacity(0.15))
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.15), radius: 5, x: 2, y: 4)
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
     
     // MARK: Editable Fields Management
