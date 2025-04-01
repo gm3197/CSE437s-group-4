@@ -3,13 +3,15 @@ import Foundation
 
 struct ReceiptItemView: View {
     @Binding var receiptItem: ReceiptItem
+    @State var receiptId: Int
     var saveAction: () -> Void // Closure to trigger save
 
     @State private var isEditing = true
     @State private var editedItemName: String
     @State private var editedItemPrice: String
 
-    init(receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
+    init(receiptId: Int, receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
+        self.receiptId = receiptId
         self._receiptItem = receiptItem
         self.saveAction = saveAction
         self._editedItemName = State(initialValue: receiptItem.wrappedValue.description)
@@ -24,36 +26,15 @@ struct ReceiptItemView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .ignoresSafeArea()
-
-            // 2) Main card container
-            VStack(spacing: 20) {
-                if isEditing {
-                    editingView
-                } else {
-                    displayView
-                }
-            }
-            .padding()
-            .background(cardBackground)
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.2), radius: 5, x: 2, y: 2)
+                .ignoresSafeArea()
+            
+            editingView
+                .background(cardBackground)
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 2, y: 2)
         }
         .navigationTitle("Item Details")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(isEditing ? "Cancel" : "Edit") {
-                    if isEditing {
-                        // Reset to original values if canceling
-                        editedItemName = receiptItem.description
-                        editedItemPrice = String(format: "%.2f", receiptItem.price)
-                    }
-                    isEditing.toggle()
-                }
-                .foregroundColor(.white)
-            }
-        }
     }
     
     // MARK: - Background Style for the card
@@ -64,6 +45,7 @@ struct ReceiptItemView: View {
     // MARK: - Editing View
     private var editingView: some View {
         VStack(spacing: 16) {
+            AuthenticatedImage(url: "\(APIService.shared.baseURL)/receipts/\(receiptId)/items/\(_receiptItem.id)/scan.png")
             TextField("Item Name", text: $editedItemName)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .font(.system(.body, design: .rounded))
@@ -83,20 +65,7 @@ struct ReceiptItemView: View {
             }
             .buttonStyle(SleekButtonStyle())
         }
-    }
-    
-    // MARK: - Display View
-    private var displayView: some View {
-        VStack(spacing: 12) {
-            Text(receiptItem.description.isEmpty ? "No name available" : receiptItem.description)
-                .font(.system(.title, design: .rounded))
-                .foregroundColor(.white)
-            
-            Text(receiptItem.price == 0.0 ? "Price Not Set" : String(format: "$%.2f", receiptItem.price))
-                .font(.system(.title2, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
-        }
-        .padding()
+        .padding([.top, .bottom], 8)
     }
     
     // MARK: - Commit Changes

@@ -62,29 +62,29 @@ struct AuthenticatedImage: View {
     }
     
     var body: some View {
-        Group {
-            if loading == true {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .colorInvert()
-            } else {
-                if let imageData = imageData {
-                    if let uiImage = UIImage(data: imageData) {
-                        Image(uiImage: uiImage)
-                            .scaleEffect(0.5)
-                    } else {
-                        error
-                    }
+        if loading == true {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .colorInvert()
+                .onAppear() {
+                    fetchImage(url: url)
+                }
+        } else {
+            if let imageData = imageData {
+                if let uiImage = UIImage(data: imageData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: UIScreen.main.bounds.size.width * 0.9)
                 } else {
                     error
                 }
+            } else {
+                error
             }
         }
-            .onAppear() {
-                fetchImage(url: url)
-            }
     }
-    
+
     var error: some View {
         VStack(alignment: .center, spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
