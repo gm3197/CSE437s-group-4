@@ -180,10 +180,10 @@ def insert_receipt_item(receipt_id, price, description):
 		cur.execute("INSERT INTO receipt_items (receipt_id, description, price) VALUES (%s, %s, %s) RETURNING id", (receipt_id, description, price))
 		return cur.fetchone()[0]
 
-def update_receipt_item(item_id, price, description):
+def update_receipt_item(item_id, price, description, category_id):
 	with connect() as conn:
 		cur = conn.cursor()
-		cur.execute("UPDATE receipt_items SET price = %s, description = %s WHERE id = %s", (price, description, item_id))
+		cur.execute("UPDATE receipt_items SET price = %s, description = %s, category = %s WHERE id = %s", (price, description, category_id, item_id))
 
 def delete_receipt_item(receipt_id, item_id):
 	with connect() as conn:
