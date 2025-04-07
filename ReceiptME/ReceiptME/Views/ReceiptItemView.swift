@@ -66,6 +66,7 @@ struct ReceiptItemView: View {
             
             
             Picker("Select Category", selection: $selectedCategoryID) {
+                Text("No category selceted").tag(nil as Int?) // default dropdown option
                 ForEach(categories, id: \.id) { category in
                     Text(category.name).tag(category.id as Int?)
                 }
@@ -121,8 +122,8 @@ struct ReceiptItemView: View {
                         self.selectedCategoryID = matchedCategory.id
                         self.selectedCategoryName = matchedCategory.name
                     } else {
-                        self.selectedCategoryID = fetchedCategories.first?.id // Default to first category
-                        self.selectedCategoryName = fetchedCategories.first?.name ?? "No Category Selected"
+                        self.selectedCategoryID = nil
+                        self.selectedCategoryName = "No Category Selected"
                     }
                     case .failure(let error):
                         print("Error retrieving categories: \(error)")
