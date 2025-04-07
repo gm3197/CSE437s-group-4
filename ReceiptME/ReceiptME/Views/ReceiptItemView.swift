@@ -15,6 +15,8 @@ struct ReceiptItemView: View {
     @State private var categories: [Category] = []
     @State private var selectedCategoryID: Int?
     @State private var selectedCategoryName: String = "Unknown Category"
+    
+    @State private var are_changes_saved = false
 
     init(receiptId: Int, receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
         self.receiptId = receiptId
@@ -86,13 +88,16 @@ struct ReceiptItemView: View {
                 if commitChanges() {
                     saveAction() // update backend
                     isEditing = false
-                    
-                    // send alert to user that changes are saved
+                    are_changes_saved = true
                     
                 }
             }
             .buttonStyle(SleekButtonStyle())
-            .alert
+            .alert("Changes Saved", isPresented: $are_changes_saved) {
+                
+            } message: {
+                Text("Press ok to continue")
+            }
         }
         .onAppear {
             showCategories()
