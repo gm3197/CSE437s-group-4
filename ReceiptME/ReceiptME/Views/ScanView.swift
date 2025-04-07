@@ -165,7 +165,7 @@ struct ScanView: View {
         errorMessage = nil
         isUploadButtonHidden = true
 
-        let imageToUpload = image
+        let imageToUpload = rotateImage(image: image) // rotate 90 degrees
 
         APIService.shared.uploadReceipt(image: imageToUpload) { result in
             DispatchQueue.main.async {
@@ -204,16 +204,24 @@ struct SleekButtonStyle: ButtonStyle {
     }
 }
 
-func rotateImage(image: UIImage, clockwise: Bool) -> UIImage {
-    let rotationAngle = clockwise ? CGFloat.pi/4 : -CGFloat.pi/4
-    let size = CGSize(width: image.size.height, height: image.size.width)
-    UIGraphicsBeginImageContextWithOptions(size, false, image.scale)
-    let context = UIGraphicsGetCurrentContext()!
-    context.translateBy(x: size.width/2, y: size.height/2)
-    context.rotate(by: rotationAngle)
-    let rect = CGRect(x: -image.size.width/2, y: -image.size.height/2, width: image.size.width, height: image.size.height)
-    image.draw(in: rect)
-    let rotatedImage = UIGraphicsGetImageFromCurrentImageContext()!
-    UIGraphicsEndImageContext()
-    return rotatedImage
+func rotateImage(image: UIImage) -> UIImage {
+    // Check the image orientation and rotate accordingly
+    if image.imageOrientation == .up {
+        // No rotation needed
+        return image
+    }
+    
+    // Set up the drawing context
+    UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+    defer { UIGraphicsEndImageContext() }
+    
+    // Draw the image in its correct orientation
+    image.draw(in: CGRect(origin: .zero, size: image.size))
+    
+    // Get the normalized image
+    guard let normalizedImage = UIGraphicsGetImageFromCurrentImageContext() else {
+        return image
+    }
+    
+    return normalizedImage
 }

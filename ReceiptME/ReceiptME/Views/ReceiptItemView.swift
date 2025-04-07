@@ -86,9 +86,13 @@ struct ReceiptItemView: View {
                 if commitChanges() {
                     saveAction() // update backend
                     isEditing = false
+                    
+                    // send alert to user that changes are saved
+                    
                 }
             }
             .buttonStyle(SleekButtonStyle())
+            .alert
         }
         .onAppear {
             showCategories()
