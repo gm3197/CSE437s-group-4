@@ -100,10 +100,13 @@ struct ScanView: View {
                         if let uploadResult = uploadResult {
                             Group {
                                 if uploadResult.success {
-                                    Text("Successful upload! Navigate to receipt page to find your itemized information.")
-                                        .foregroundColor(.green)
+                                    // remove pic of scaned receipt
+                                    Text("Upload Successful")
+                                        .foregroundColor(.white)
                                         .multilineTextAlignment(.center)
-                                        .padding(.horizontal, 20)
+                                        .onAppear {
+                                            selectedImage = nil
+                                        }
                                 } else {
                                     Text("Upload Failed. Please retake picture and try again.")
                                         .foregroundColor(.red)
