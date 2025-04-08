@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: receiptme-db
+  labels:
+    app: receiptme-db
+spec:
+  selector:
+    matchLabels:
+      app: receiptme-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: receiptme-db
+    spec:
+      containers:
+        - image: docker.io/library/postgres:latest
+          name: receiptme-db
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: password
+            - name: POSTGRES_USER
+              value: postgres
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+---
