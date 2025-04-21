@@ -65,7 +65,7 @@ def create_category(user_id, name, monthly_goal):
 
 def get_category(category_id):
     with connect() as conn:
-        cur = conn.cusror()
+        cur = conn.cursor()
         cur.execute("SELECT id, user_id, name, monthly_goal FROM budget_categories WHERE id = %s", (category_id,))
         row = cur.fetchone()
         if row is None:
