@@ -380,9 +380,8 @@ extension ReceiptDetailView {
         
         if let newItem = allItems.last, newItem.id <= 0 {
             print("Adding new receipt item")
-            viewModel.addReceiptItem(newItem, receipt_id: details.id) { updatedDetails in
+            viewModel.addReceiptItem(newItem, receiptId: details.id) { updatedDetails in
                 DispatchQueue.main.async {
-                    // shnuff
                     self.details = updatedDetails
                     self.editableItems = updatedDetails.items
                     self.newlyAddedItemIndex = nil
@@ -391,12 +390,12 @@ extension ReceiptDetailView {
             
         } else {
             print("Updating existing receipt item")
-            let changedItem = findChangedItems(originalItems: originalItems, updatedItems: editableItems)
+            let changedItem = findChangedItems(originalItems: originalItems, updatedItems: allItems)
             
             viewModel.updateReceiptItem(changedItem, receipt_id: details.id) { updated in
     //            print("4. Completion handler reached with updated details")
                 DispatchQueue.main.async {
-    //                self.details = updated
+//                    self.details = updated
     //                self.editableItems = updated.items // idk
     //                print("5. UI has been updated")
                 }
@@ -443,7 +442,7 @@ extension ReceiptDetailView {
     
     private func addReceiptItem() {
         // create a temp item with a negative ID (backend should replace it on save)
-        let newItem = ReceiptItem(description: "New Item", price: 0.0, id: Int.random(in: -9999...(-1)))
+        let newItem = ReceiptItem(description: "New Item", price: 0.0, id: Int.random(in: -9999...(-1)), category: nil)
         editableItems.append(newItem)
         
         // go to receiptItemView so user can edit values
