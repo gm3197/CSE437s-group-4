@@ -79,6 +79,7 @@ class ReceiptViewModel: ObservableObject {
                 switch result {
                 case .success():
                     self?.receipts.removeAll { $0.id == receipt.id }
+                    print("successfully deleted receipt")
                 case .failure(let error):
                     print("Error deleting receipt: \(error)")
                 }
