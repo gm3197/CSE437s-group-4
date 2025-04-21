@@ -412,18 +412,36 @@ extension ReceiptDetailView {
     
     
     private func deleteItems(at offsets: IndexSet) {
+        print("Delete items function starting")
         guard let details = details else { return }
+        let receiptId = details.id
         
         for idx in offsets {
             let itemId = editableItems[idx].id
             
+            print("delete receipt item func being called")
             viewModel.deleteReceiptItem(itemId, within_receipt_with_id: details.id) { result in
                 switch result {
                 case .success:
-                    DispatchQueue.main.async {
-                        // sync local UI with server
-                        editableItems.remove(atOffsets: offsets)
+                    print("Initial succes")
+//                    DispatchQueue.main.async {
+//                        // sync local UI with server
+//                        editableItems.remove(atOffsets: offsets)
+//                    }
+                    viewModel.fetchReceiptDetails(receiptId: receiptId) { fetchResult in
+                        switch fetchResult {
+                        case .success(let updatedDetails):
+                            DispatchQueue.main.async {
+                                print("Re-fetching receipt details after item deletion")
+                                self.details = updatedDetails
+                                self.editableItems = updatedDetails.items
+                            }
+                        case .failure(let error):
+                            print("Error re‑fetching receipt after delete:", error)
+                        }
                     }
+                    
+                    
                 case .failure(let error):
                     print("Failed to delete item:", error)
                 }

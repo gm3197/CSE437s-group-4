@@ -184,7 +184,7 @@ class ReceiptViewModel: ObservableObject {
                 switch result {
                 case .success():
                     print("Successfully deleted receipt item")
-//                    completion()
+                    completion(.success(()))
                 case .failure(let error):
                     print("Error deleting receipt item: ", error)
                 }
