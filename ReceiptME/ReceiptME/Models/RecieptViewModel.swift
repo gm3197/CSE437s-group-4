@@ -147,6 +147,10 @@ class ReceiptViewModel: ObservableObject {
         
     }
     
+    func addReceiptItem() {
+        
+    }
+    
     
     
     

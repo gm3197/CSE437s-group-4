@@ -81,7 +81,7 @@ struct ReceiptItemView: View {
             
             
             
-            Button("Save Changes") {
+            Button(receiptItem.id <= 0 ? "Add Item" : "Save Changes") {
                 if commitChanges() {
                     saveAction() // update backend
                     isEditing = false
