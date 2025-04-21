@@ -12,7 +12,7 @@ struct ContentView: View {
             DashboardView()
                 .tabItem {
                     Image(systemName: "list.bullet.rectangle")
-                    Text("Receipts")
+                    Text("Dashboard")
                 }
             
             SettingsView()

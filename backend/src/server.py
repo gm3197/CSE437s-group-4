@@ -8,6 +8,7 @@ from openai import OpenAI
 import json
 import io
 import os
+from datetime import datetime
 
 openai_client = OpenAI()
 
@@ -28,6 +29,59 @@ def	google_auth_token():
 	return {
 		"session": session_token
 	}
+
+@bottle.get("/categories")
+def get_budget():
+		return get_budget_for_month(datetime.now().year, datetime.now().month)
+
+@bottle.get("/categories/<year>/<month>")
+def get_budget_for_month(year, month):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	try:
+		year = int(year)
+		month = int(month)
+	except:
+		bottle.response.status = 404
+		return "Not Found"
+		
+	categories = db.get_budget_categories(user_id, year, month)
+
+	return {
+		"categories": categories
+	}
+
+@bottle.post("/categories")
+def create_category():
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	req_data = bottle.request.json
+
+	if "name" not in req_data or "monthly_goal" not in req_data:
+		bottle.response.status = 400
+		return "Bad request"
+
+	try:
+		monthly_goal = float(req_data["monthly_goal"])
+	except:
+		bottle.response.status = 400
+		return "monthly_goal should be a double"
+
+	category_id = db.create_category(user_id, req_data["name"], monthly_goal)
+
+	return {
+		"id": category_id,
+		"name": req_data["name"],
+		"monthly_goal": req_data["monthly_goal"],
+		"month_spend": 0.0,
+	}
+
 
 @bottle.get("/receipts")
 def get_receipts():
@@ -86,6 +140,28 @@ def update_receipt(receipt_id):
 	bottle.response.status = 200
 	return ""
 
+@bottle.delete("/receipts/<receipt_id>")
+def delete_receipt(receipt_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	receipt = db.get_receipt(receipt_id)
+
+	if receipt is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if receipt["owner_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	db.delete_receipt(receipt_id)
+
+	bottle.response.status = 200
+	return ""
+
 @bottle.post("/receipts/<receipt_id>/items")
 def add_receipt_item(receipt_id):
 	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
@@ -108,7 +184,11 @@ def add_receipt_item(receipt_id):
 		bottle.response.status = 400
 		return "Bad request"
 
-	item_id = db.insert_receipt_item(receipt_id, req_data["price"], req_data["description"])
+	category_id = None
+	if "category" in req_data:
+		category_id = req_data["category"]
+
+	item_id = db.insert_receipt_item(receipt_id, req_data["price"], req_data["description"], category_id)
 
 	bottle.response.status = 200
 	return {
@@ -136,7 +216,9 @@ def edit_receipt_item(receipt_id, item_id):
 		bottle.response.status = 400
 		return "Bad request"
 
-	db.update_receipt_item(item_id, req_data["price"], req_data["description"])
+	category_id = req_data["category"] if "category" in req_data else None
+
+	db.update_receipt_item(item_id, req_data["price"], req_data["description"], category_id)
 
 	bottle.response.status = 200
 	return
