@@ -381,7 +381,9 @@ extension ReceiptDetailView {
 //        print("POST UPDATE details in saveItemEdits func: \(updatedDetails)\n")
         
         if let newItem = allItems.last, newItem.id <= 0 {
-            print("Adding new receipt item")
+//            print("Adding new receipt item")
+            print("Calling addReceiptItem for placeholder ID \(newItem.id)")
+
             viewModel.addReceiptItem(newItem, receiptId: details.id) { updatedDetails in
                 DispatchQueue.main.async {
                     self.details = updatedDetails

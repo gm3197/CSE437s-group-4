@@ -219,7 +219,7 @@ class APIService {
     
     // MARK: - Add Receipt Item
     func addReceiptItem(_ item: NewReceiptItemRequest, to_receipt_with_id receipt_id: Int, completion: @escaping (Result<ReceiptItem, Error>) -> Void) {
-        guard let url = URL(string: "\(baseURL)/receipts/\(receipt_id)") else {
+        guard let url = URL(string: "\(baseURL)/receipts/\(receipt_id)/items") else {
             completion(.failure(APIError.invalidURL))
             return
         }

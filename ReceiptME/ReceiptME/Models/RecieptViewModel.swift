@@ -162,13 +162,13 @@ class ReceiptViewModel: ObservableObject {
             case .success:
                 // On success, re‑fetch full details
                 self.fetchReceiptDetails(receiptId: receiptId) { fetchResult in
-                    switch fetchResult {
-                    case .success(let details):
+                    if case .success(let details) = fetchResult {
                         completion(details)
-                    case .failure(let error):
-                        print("Error refetching receipt after add:", error)
                     }
-                }
+//                    case .failure(let error):
+//                        print("Error refetching receipt after add:", error)
+                    }
+//                }
 
             case .failure(let error):
                 print("Error adding receipt item:", error)
