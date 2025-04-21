@@ -89,8 +89,9 @@ struct ReceiptItemView: View {
                 if commitChanges() {
                     saveAction() // update backend
                     isEditing = false
-                    dismiss() // pops back to ReceiptDetailView !!
                     are_changes_saved = true
+                    dismiss() // pops back to ReceiptDetailView !!
+                }
             }
             .buttonStyle(SleekButtonStyle())
             .alert("Changes Saved", isPresented: $are_changes_saved) {
