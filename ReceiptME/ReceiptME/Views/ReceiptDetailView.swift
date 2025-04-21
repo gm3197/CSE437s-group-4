@@ -152,6 +152,8 @@ extension ReceiptDetailView {
                         }
                     }
                 }
+                .onDelete(perform: deleteItems)
+                
                 // add receiptItem button
                 Button(action: addReceiptItem) {
                     HStack {
@@ -405,6 +407,28 @@ extension ReceiptDetailView {
         }
         
     }
+    
+    
+    private func deleteItems(at offsets: IndexSet) {
+        guard let details = details else { return }
+        
+        for idx in offsets {
+            let itemId = editableItems[idx].id
+            
+            viewModel.deleteReceiptItem(itemId, within_receipt_with_id: details.id) { result in
+                switch result {
+                case .success:
+                    DispatchQueue.main.async {
+                        // sync local UI with server
+                        editableItems.remove(atOffsets: offsets)
+                    }
+                case .failure(let error):
+                    print("Failed to delete item:", error)
+                }
+            }
+        }
+    }
+    
     
     private func findChangedItems(originalItems: [ReceiptItem], updatedItems: [ReceiptItem]) -> ReceiptItem {
         

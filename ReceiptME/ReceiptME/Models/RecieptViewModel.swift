@@ -176,6 +176,24 @@ class ReceiptViewModel: ObservableObject {
         }
     }
     
+    func deleteReceiptItem(_ item_id: Int, within_receipt_with_id receiptId: Int, completion: @escaping (Result<Void, Error>) -> Void) {
+        print("Deleting receipt item")
+        
+        APIService.shared.deleteReceiptItem(item_id, within_receipt_with_id: receiptId) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success():
+                    print("Successfully deleted receipt item")
+//                    completion()
+                case .failure(let error):
+                    print("Error deleting receipt item: ", error)
+                }
+            }
+        }
+        
+        
+    }
+    
     
     
     
