@@ -391,7 +391,7 @@ extension ReceiptDetailView {
         } else {
             let changedItem = findChangedItems(originalItems: originalItems, updatedItems: editableItems)
             
-            viewModel.updateReceiptItem(changedItem, receipt_id: updatedDetails.id) { updated in
+            viewModel.updateReceiptItem(changedItem, receipt_id: details.id) { updated in
     //            print("4. Completion handler reached with updated details")
                 DispatchQueue.main.async {
     //                self.details = updated

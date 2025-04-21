@@ -147,11 +147,10 @@ class ReceiptViewModel: ObservableObject {
         
     }
     
-    func addReceiptItem() {
+    func addReceiptItem(_ item: ReceiptItem, receipt_id: Int, completion: @escaping (ReceiptDetails) -> Void
+    ) {
+        
         
     }
-    
-    
-    
     
 }
