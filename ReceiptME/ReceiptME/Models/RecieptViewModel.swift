@@ -149,6 +149,17 @@ class ReceiptViewModel: ObservableObject {
     
     func addReceiptItem(_ item: ReceiptItem, receipt_id: Int, completion: @escaping (ReceiptDetails) -> Void
     ) {
+        APIService.shared.addReceiptItem(item: ReceiptItem, receipt_id: Int?) {
+            result in DispatchQueue.main.async {
+                switch result {
+                case .success():
+                    print("successfully added receipt item")
+                case .failure(let error):
+                    print("Failed to add receipt item")
+                    completion(.failure(error))
+                }
+            }
+        }
         
         
     }
