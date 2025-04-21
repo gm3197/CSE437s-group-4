@@ -6,9 +6,8 @@ struct DashboardView: View {
     
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var hasFetched = false // Prevent repeated API calls
-    @State private var selectedSortOption = "Sort By: " // Default dropdown text
-   
+    @State private var hasFetched = false
+    
     @State private var month: Int = Calendar.current.component(.month, from: Date())
     @State private var year: Int = Calendar.current.component(.year, from: Date())
     @State private var categories: [Category] = []
@@ -41,21 +40,6 @@ struct DashboardView: View {
         }
     }
     
-    // Add sorting methods
-    private func sortReceiptsByDate() { // date is stored as a string !!
-        viewModel.receipts.sort { $0.date < $1.date }
-        
-//        let date
-        
-    }
-    
-    private func sortReceiptsByTotal() {
-        viewModel.receipts.sort { $0.total < $1.total }
-    }
-    private func sortReceiptsByMerchant() {
-        viewModel.receipts.sort { $0.merchant.localizedCaseInsensitiveCompare($1.merchant) == .orderedAscending }
-    }
-    
     // MARK: - Background Gradient
     private var backgroundGradient: some View {
         LinearGradient(
@@ -66,17 +50,15 @@ struct DashboardView: View {
         .ignoresSafeArea()
     }
     
-    // MARK: - Main Content
+    // MARK: - Content State
     @ViewBuilder
     private var contentView: some View {
         if isLoading {
             loadingView
         } else if let errorMessage = errorMessage {
             errorView(message: errorMessage)
-        } else if !viewModel.receipts.isEmpty {
-            listView
         } else {
-            emptyView
+            listView
         }
     }
     
@@ -102,93 +84,82 @@ struct DashboardView: View {
             .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
     }
     
-    // MARK: - Empty View
-    private var emptyView: some View {
-        Text("No receipts available.")
-            .font(.system(.title3, design: .rounded))
-            .foregroundColor(.white)
-            .padding()
-            .background(Color.white.opacity(0.2))
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2)
-        .refreshable {
-            print("Page refreshed !!")
-            fetchReceipts()
-        }
-    }
-    
-    // MARK: - List View
+    // MARK: - Main List View
     private var listView: some View {
         List {
-            Section() {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .center) {
-                        Button("", systemImage: "arrow.left", action: {
-                            if month == 1 {
-                                month = 12
-                                year -= 1
-                            } else {
-                                month -= 1
-                            }
-                            fetchCategories()
-                        })
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.borderless)
-                        Spacer()
-                        Text(verbatim: "\(Calendar.current.monthSymbols[month - 1]) \(year)")
-                            .font(.title.bold())
-                        Spacer()
-                        Button("", systemImage: "arrow.right", action: {
-                            if month == 12 {
-                                month = 1
-                                year += 1
-                            } else {
-                                month += 1
-                            }
-                            fetchCategories()
-                        })
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.borderless)
+            // Budget Categories Section
+            Section(header: Text("Budget Categories").font(.headline)) {
+                // Month navigation
+                HStack {
+                    Button(action: {
+                        if month == 1 {
+                            month = 12; year -= 1
+                        } else { month -= 1 }
+                        fetchCategories()
+                    }) {
+                        Image(systemName: "arrow.left")
                     }
-                    HStack(alignment: .center) {
-                        Text("Budget Categories")
-                            .font(.headline)
-                        Spacer()
-                        NewCategoryButton(parent: self)
+                    .buttonStyle(.borderless)
+                    Spacer()
+                    Text("\(Calendar.current.monthSymbols[month - 1]) \(year)")
+                        .font(.title.bold())
+                    Spacer()
+                    Button(action: {
+                        if month == 12 {
+                            month = 1; year += 1
+                        } else { month += 1 }
+                        fetchCategories()
+                    }) {
+                        Image(systemName: "arrow.right")
                     }
-                    ForEach(categories) { category in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(category.name)
-                                .font(.system(size: 14))
-                            HStack(alignment: .center, spacing: 4) {
-                                ProgressView(value: category.month_spend / category.monthly_goal)
-                                if categoryShowing == .percentage {
-                                    Text(String(format: "%.0f%%", category.month_spend / category.monthly_goal * 100))
-                                        .font(.footnote)
-                                } else {
-                                    Text(String(format: "$%.2f", category.month_spend))
-                                        .font(.footnote)
-                                }
-                            }
-                        }
-                    }
-                    HStack() {
-                        Text(String(format: "Total: $%.2f", categories.map { element in
-                            element.month_spend
-                        }.reduce(0, +)))
-                            .font(.body.bold())
-                        Spacer()
-                        Picker("Number Type", selection: $categoryShowing) {
-                            Text("$").tag(BudgetValue.amount)
-                            Text("%").tag(BudgetValue.percentage)
-                        }
-                            .pickerStyle(.segmented)
-                            .frame(width: 80)
-                    }
+                    .buttonStyle(.borderless)
                 }
+                
+                // Header with new category button
+                HStack {
+                    Text("Categories")
+                        .font(.headline)
+                    Spacer()
+                    NewCategoryButton(parent: self)
+                }
+                
+                // Category rows
+                ForEach(categories) { category in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(category.name)
+                            .font(.system(size: 14, design: .rounded))
+                        HStack(spacing: 6) {
+                            ProgressView(value: category.month_spend / category.monthly_goal)
+                            if categoryShowing == .percentage {
+                                Text(String(format: "%.0f%%", category.month_spend / category.monthly_goal * 100))
+                                    .font(.footnote)
+                            } else {
+                                Text(String(format: "$%.2f", category.month_spend))
+                                    .font(.footnote)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
                     .listRowBackground(Color.white.opacity(0.15))
+                }
+                .onDelete(perform: deleteCategory)
+                
+                // Total & toggle
+                HStack {
+                    Text(String(format: "Total: $%.2f", categories.map { $0.month_spend }.reduce(0, +)))
+                        .font(.body.bold())
+                    Spacer()
+                    Picker("Type", selection: $categoryShowing) {
+                        Text("$").tag(BudgetValue.amount)
+                        Text("%").tag(BudgetValue.percentage)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 80)
+                }
             }
-            Section(header: Text("Receipts")) {
+            
+            // Receipts Section
+            Section(header: Text("Receipts").font(.headline)) {
                 ForEach(viewModel.receipts) { receipt in
                     NavigationLink(
                         destination: ReceiptDetailView(viewModel: viewModel, receipt: receipt)
@@ -202,62 +173,47 @@ struct DashboardView: View {
                 .onDelete(perform: deleteItems)
             }
         }
-        .scrollContentBackground(.hidden) // iOS 16+ to let the gradient show through
+        .scrollContentBackground(.hidden)
     }
     
+    // MARK: - New Category Button
     private struct NewCategoryButton: View {
         @State private var presented = false
         @State private var name = ""
         @State private var spendGoal = ""
-        @State private var errorStr: String? = nil
+        @State private var errorStr: String?
         @State private var errorPresented = false
-        
         private var parent: DashboardView
-        
-        init(parent: DashboardView) {
-            self.parent = parent
-        }
-        
+        init(parent: DashboardView) { self.parent = parent }
         var body: some View {
-            Button("New Category", systemImage: "plus") {
-                name = ""
-                spendGoal = ""
-                presented = true
+            Button(action: {
+                name = ""; spendGoal = ""; presented = true
+            }) {
+                Image(systemName: "plus")
             }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .alert("New Category", isPresented: $presented, actions: {
-                    TextField("Category Name", text: $name)
-                    TextField("Monthly Spend Goal", text: $spendGoal)
-                        .keyboardType(.decimalPad)
-                    Button("Save") {
-                        guard let goal = Double(spendGoal) else {
-                            errorPresented = true
-                            errorStr = "Please enter a valid dollar amount"
-                            return
-                        }
-                        APIService.shared.createCategory(name: name, spending_goal: goal) { result in
-                            switch result {
-                            case .success:
-                                presented = false
-                                parent.fetchCategories()
-                            case .failure(let err):
-                                presented = false
-                                errorPresented = true
-                                errorStr = err.localizedDescription
-                            }
-                        }
+            .buttonStyle(.borderless)
+            .alert("New Category", isPresented: $presented) {
+                TextField("Name", text: $name)
+                TextField("Monthly Goal", text: $spendGoal)
+                    .keyboardType(.decimalPad)
+                Button("Save") {
+                    guard let goal = Double(spendGoal) else {
+                        errorStr = "Enter a valid amount"; errorPresented = true; return
                     }
-                    Button("Cancel", role: .cancel) {
-                        presented = false
-                    }
-                })
-                .alert(errorStr ?? "Unable to create category", isPresented: $errorPresented) {
-                    Button("OK", role: .cancel) {
-                        errorPresented = false
-                        presented = true
+                    APIService.shared.createCategory(name: name, spending_goal: goal) { result in
+                        switch result {
+                        case .success:
+                            DispatchQueue.main.async { parent.fetchCategories() }
+                        case .failure(let err):
+                            DispatchQueue.main.async { errorStr = err.localizedDescription; errorPresented = true }
+                        }
                     }
                 }
+                Button("Cancel", role: .cancel) { }
+            }
+            .alert(errorStr ?? "Error creating category", isPresented: $errorPresented) {
+                Button("OK", role: .cancel) { }
+            }
         }
     }
     
@@ -277,23 +233,39 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - Delete Items
-    private func deleteItems(at offsets: IndexSet) {
-        for index in offsets {
-            let receiptToDelete = viewModel.receipts[index]
-            viewModel.deleteReceipt(receiptToDelete)
+    // MARK: - Delete Category
+    private func deleteCategory(at offsets: IndexSet) {
+        let toDelete = offsets.map { categories[$0] }
+        categories.remove(atOffsets: offsets)
+        toDelete.forEach { category in
+            APIService.shared.deleteCategory(categoryId: category.id) { result in
+                DispatchQueue.main.async {
+                    if case .failure(let err) = result {
+                        errorMessage = err.localizedDescription
+                    }
+                }
+            }
         }
-        // If you want rows to vanish immediately, uncomment:
-        // viewModel.receipts.remove(atOffsets: offsets)
     }
     
+    // MARK: - Delete Receipts
+    private func deleteItems(at offsets: IndexSet) {
+        for index in offsets {
+            let receipt = viewModel.receipts[index]
+            viewModel.deleteReceipt(receipt)
+        }
+    }
+    
+    // MARK: - Fetch Categories
     private func fetchCategories() {
         APIService.shared.getCategories(year: year, month: month) { result in
-            switch result {
-            case .success(let categories):
-                self.categories = categories
-            case .failure(let error):
-                errorMessage = error.localizedDescription
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let cats):
+                    categories = cats
+                case .failure(let err):
+                    errorMessage = err.localizedDescription
+                }
             }
         }
     }
@@ -305,19 +277,14 @@ struct DashboardView: View {
                 isLoading = false
                 switch result {
                 case .success(let list):
-                    print("Successfully fetched receipts")
-                    // Convert [ReceiptPreview] -> [Receipt]
                     viewModel.receipts = list.receipts.map { preview in
-                        Receipt(
-                            id: preview.id,
-                            merchant: preview.merchant,
-                            date: preview.date,
-                            total: preview.total
-                        )
+                        Receipt(id: preview.id,
+                                merchant: preview.merchant,
+                                date: preview.date,
+                                total: preview.total)
                     }
-                case .failure(let error):
-                    print("Failed to fetch receipts")
-                    errorMessage = error.localizedDescription
+                case .failure(let err):
+                    errorMessage = err.localizedDescription
                 }
             }
         }
