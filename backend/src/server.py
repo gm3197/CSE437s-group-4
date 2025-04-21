@@ -162,7 +162,11 @@ def add_receipt_item(receipt_id):
 		bottle.response.status = 400
 		return "Bad request"
 
-	item_id = db.insert_receipt_item(receipt_id, req_data["price"], req_data["description"])
+	category_id = None
+	if "category" in req_data:
+		category_id = req_data["category"]
+
+	item_id = db.insert_receipt_item(receipt_id, req_data["price"], req_data["description"], category_id)
 
 	bottle.response.status = 200
 	return {
