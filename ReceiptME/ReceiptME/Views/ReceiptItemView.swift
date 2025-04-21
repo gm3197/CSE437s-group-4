@@ -16,6 +16,7 @@ struct ReceiptItemView: View {
     @State private var selectedCategoryID: Int?
     @State private var selectedCategoryName: String = "Unknown Category"
     
+    @Environment(\.dismiss) private var dismiss
     @State private var are_changes_saved = false
 
     init(receiptId: Int, receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
@@ -84,12 +85,12 @@ struct ReceiptItemView: View {
             
             
             
-            Button("Save Changes") {
+            Button(receiptItem.id <= 0 ? "Add Item" : "Save Changes") {
                 if commitChanges() {
                     saveAction() // update backend
                     isEditing = false
                     are_changes_saved = true
-                    
+                    dismiss() // pops back to ReceiptDetailView !!
                 }
             }
             .buttonStyle(SleekButtonStyle())

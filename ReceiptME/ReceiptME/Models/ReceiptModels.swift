@@ -48,6 +48,16 @@ struct ReceiptDetails: Codable, Identifiable {
     var tax: Double
 }
 
+// no ID on this request, the ID will be assigned after item is created in backend, see APIService.addReceiptItem
+struct NewReceiptItemRequest: Codable {
+    var description: String
+    var price: Double
+    var category: Int?
+}
+
+struct NewReceiptItemResponse: Codable {
+    var item_id: Int
+}
 
 struct ReceiptItem: Codable, Identifiable {
     // This id is generated locally and won't be decoded from the JSON.
@@ -72,11 +82,12 @@ struct ReceiptItem: Codable, Identifiable {
     }
     
     // Standard initializer for convenience.
-    init(description: String, price: Double, id: Int) {
+    init(description: String, price: Double, id: Int, category: Int?) {
         // NEW
         self.id = id
         self.description = description
         self.price = price
+        self.category = category
     }
 }
 

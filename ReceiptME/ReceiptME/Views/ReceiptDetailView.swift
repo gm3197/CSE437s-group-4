@@ -26,6 +26,12 @@ struct ReceiptDetailView: View {
     // Items in the receipt
     @State private var editableItems: [ReceiptItem] = []
     
+    // Creating a new receiptItem
+//    @State private var creatingNewItem: Bool = false
+    @State private var newlyAddedItemIndex: Int? = nil
+
+
+    
     
     // A simple DateFormatter. Adjust to match your desired format.
     private let dateFormatter: DateFormatter = {
@@ -58,6 +64,29 @@ struct ReceiptDetailView: View {
                         .padding()
                 }
             }
+            // navigationLink to adding new receipt item
+            if let idx = newlyAddedItemIndex {
+                NavigationLink( destination: ReceiptItemView(
+                        receiptId: details!.id, // force unwrap
+                        receiptItem: $editableItems[idx],
+                        saveAction: {
+                            saveItemEdits()
+                            newlyAddedItemIndex = nil    // reset after save
+                        }
+                    ),
+                    isActive: Binding(
+                        get: { newlyAddedItemIndex != nil },
+                        set: { isActive in
+                            if !isActive { newlyAddedItemIndex = nil }
+                        }
+                    )
+                ) {
+                    EmptyView() // placeholder... so code is executed w out displaying any real content
+                    
+                    
+                }
+            }
+            
         }
         .navigationTitle("Receipt Detail")
         .navigationBarTitleDisplayMode(.inline)
@@ -66,6 +95,7 @@ struct ReceiptDetailView: View {
                 resetEditableFields()
                 isEditing = false
             } : nil,
+            // Edit receipt meta data
             trailing: Button(isEditing ? "Save" : "Edit") {
                 if isEditing {
                     saveMetadataEdits()
@@ -83,6 +113,7 @@ struct ReceiptDetailView: View {
                 }
                 isEditing.toggle()
             }
+            
         )
         .onAppear {
             // Fetch the full details for this receipt
@@ -121,6 +152,19 @@ extension ReceiptDetailView {
                         }
                     }
                 }
+                .onDelete(perform: deleteItems)
+                
+                // add receiptItem button
+                Button(action: addReceiptItem) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add Item")
+                    }
+                    .font(.subheadline)
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
             } header: {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(details.merchant)
@@ -325,34 +369,101 @@ extension ReceiptDetailView {
     }
     
     private func saveItemEdits() {
-        guard var updatedDetails = details else {
-            print("ERROR: No details available")
-            return
-        }
-        let originalItems = updatedDetails.items
+        guard let details = details else {
+                print("ERROR: No details available")
+                return
+            }
+        let originalItems = details.items
 //        print("PRE UPDATE details in saveItemEdits func: \(originalItems)\n")
-        updatedDetails.items = editableItems
+
+        let allItems = editableItems
+
 //        print("POST UPDATE details in saveItemEdits func: \(updatedDetails)\n")
         
-        let changedItem = findChangedItems(originalItems: originalItems, updatedItems: editableItems)
-        
-        viewModel.updateReceiptItem(changedItem, receipt_id: updatedDetails.id) { updated in
-//            print("4. Completion handler reached with updated details")
-            DispatchQueue.main.async {
-//                self.details = updated
-//                self.editableItems = updated.items // idk
-//                print("5. UI has been updated")
+        if let newItem = allItems.last, newItem.id <= 0 {
+//            print("Adding new receipt item")
+            print("Calling addReceiptItem for placeholder ID \(newItem.id)")
+
+            viewModel.addReceiptItem(newItem, receiptId: details.id) { updatedDetails in
+                DispatchQueue.main.async {
+                    self.details = updatedDetails
+                    self.editableItems = updatedDetails.items
+                    self.newlyAddedItemIndex = nil
+                }
+            }
+            
+        } else {
+            print("Updating existing receipt item")
+            let changedItem = findChangedItems(originalItems: originalItems, updatedItems: allItems)
+            
+            viewModel.updateReceiptItem(changedItem, receipt_id: details.id) { updated in
+    //            print("4. Completion handler reached with updated details")
+                DispatchQueue.main.async {
+//                    self.details = updated
+    //                self.editableItems = updated.items // idk
+    //                print("5. UI has been updated")
+                }
+                
             }
             
         }
         
     }
     
+    
+    private func deleteItems(at offsets: IndexSet) {
+        print("Delete items function starting")
+        guard let details = details else { return }
+        let receiptId = details.id
+        
+        for idx in offsets {
+            let itemId = editableItems[idx].id
+            
+            print("delete receipt item func being called")
+            viewModel.deleteReceiptItem(itemId, within_receipt_with_id: details.id) { result in
+                switch result {
+                case .success:
+                    print("Initial succes")
+//                    DispatchQueue.main.async {
+//                        // sync local UI with server
+//                        editableItems.remove(atOffsets: offsets)
+//                    }
+                    viewModel.fetchReceiptDetails(receiptId: receiptId) { fetchResult in
+                        switch fetchResult {
+                        case .success(let updatedDetails):
+                            DispatchQueue.main.async {
+                                print("Re-fetching receipt details after item deletion")
+                                self.details = updatedDetails
+                                self.editableItems = updatedDetails.items
+                            }
+                        case .failure(let error):
+                            print("Error re‑fetching receipt after delete:", error)
+                        }
+                    }
+                    
+                    
+                case .failure(let error):
+                    print("Failed to delete item:", error)
+                }
+            }
+        }
+    }
+    
+    
     private func findChangedItems(originalItems: [ReceiptItem], updatedItems: [ReceiptItem]) -> ReceiptItem {
         
         // Create a dictionary of original items keyed by ID for faster lookup
         let originalItemDict = Dictionary(uniqueKeysWithValues: originalItems.map { ($0.id, $0) })
         
+//        // if mismatched lenghts (new item was created)
+//        if updatedItems.count > originalItems.count {
+//            let newOnes = updatedItems.filter { originalItemDict[$0.id] == nil }
+//            if let newItem = newOnes.first { // will only work with one item added at a time ??
+//                return newItem
+//            }
+//        }
+        
+        // loop through existing items
         for updatedItem in updatedItems {
             if let originalItem = originalItemDict[updatedItem.id] {
                 // Check if description or price has changed
@@ -372,6 +483,17 @@ extension ReceiptDetailView {
             .font(.system(.headline, design: .rounded))
             .foregroundColor(.white.opacity(0.8))
     }
+    
+    private func addReceiptItem() {
+        // create a temp item with a negative ID (backend should replace it on save)
+        let newItem = ReceiptItem(description: "New Item", price: 0.0, id: Int.random(in: -9999...(-1)), category: nil)
+        editableItems.append(newItem)
+        
+        // go to receiptItemView so user can edit values
+        newlyAddedItemIndex = editableItems.count - 1
+    }
+
+    
 }
 
 // MARK: - A handy style for values in the detail card
