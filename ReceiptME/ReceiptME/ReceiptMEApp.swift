@@ -10,11 +10,13 @@
 import SwiftUI
 import GoogleSignIn
 import GoogleSignInSwift
+import Foundation
 
 
 @main
 struct ReceiptMEApp: App {
     @AppStorage("user_permanent_token") var backend_token: String?
+    @AppStorage("hasSeenWelcome") private var hasSeenWelcome: Bool = false
     @StateObject var viewModel = ReceiptViewModel()
     
     var body: some Scene {
@@ -23,10 +25,10 @@ struct ReceiptMEApp: App {
                 ContentView()
                     .environmentObject(viewModel)
             } else {
-                AuthView()
+                WelcomeView()
+                    
+                }
             }
+            
         }
-        
     }
-}
-
