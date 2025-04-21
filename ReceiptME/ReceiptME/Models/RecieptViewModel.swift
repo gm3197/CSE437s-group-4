@@ -147,21 +147,36 @@ class ReceiptViewModel: ObservableObject {
         
     }
     
-    func addReceiptItem(_ item: ReceiptItem, receipt_id: Int, completion: @escaping (ReceiptDetails) -> Void
+    func addReceiptItem(_ item: ReceiptItem, receiptId: Int, completion: @escaping (ReceiptDetails) -> Void
     ) {
-        APIService.shared.addReceiptItem(item: ReceiptItem, receipt_id: Int?) {
-            result in DispatchQueue.main.async {
-                switch result {
-                case .success():
-                    print("successfully added receipt item")
-                case .failure(let error):
-                    print("Failed to add receipt item")
-                    completion(.failure(error))
+//        APIService.shared.addReceiptItem(_ item: ReceiptItem, receipt_id: Int, completion: @escaping (ReceiptDetails) -> Void
+//        ) {
+        let req = NewReceiptItemRequest(
+                    description: item.description,
+                    price: item.price,
+                    category: item.category
+                )
+    
+        APIService.shared.addReceiptItem(req, to_receipt_with_id: receiptId) { result in
+            switch result {
+            case .success:
+                // On success, re‑fetch full details
+                self.fetchReceiptDetails(receiptId: receiptId) { fetchResult in
+                    switch fetchResult {
+                    case .success(let details):
+                        completion(details)
+                    case .failure(let error):
+                        print("Error refetching receipt after add:", error)
+                    }
                 }
+
+            case .failure(let error):
+                print("Error adding receipt item:", error)
             }
         }
-        
-        
     }
+    
+    
+    
     
 }
