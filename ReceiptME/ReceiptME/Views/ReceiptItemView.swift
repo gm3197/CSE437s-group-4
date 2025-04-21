@@ -15,6 +15,8 @@ struct ReceiptItemView: View {
     @State private var categories: [Category] = []
     @State private var selectedCategoryID: Int?
     @State private var selectedCategoryName: String = "Unknown Category"
+    
+    @Environment(\.dismiss) private var dismiss
 
     init(receiptId: Int, receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
         self.receiptId = receiptId
@@ -85,6 +87,7 @@ struct ReceiptItemView: View {
                 if commitChanges() {
                     saveAction() // update backend
                     isEditing = false
+                    dismiss() // pops back to ReceiptDetailView !!
                 }
             }
             .buttonStyle(SleekButtonStyle())
