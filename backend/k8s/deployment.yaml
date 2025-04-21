@@ -68,7 +68,7 @@ spec:
             - name: GOOGLE_AUTH_CLIENT_ID
               value: 650383131525-anbr9ft0hfl03jbhbl21sokpgchc12tg.apps.googleusercontent.com
             - name: OPENAI_API_KEY
-              value: lost it i guess
+              value: <open ai key here>
 ---
 apiVersion: v1
 kind: Service
@@ -88,8 +88,7 @@ metadata:
   annotations:
 spec:
   rules:
-    - host: receiptme.smallercircles.dev
-      http:
+    - http:
         paths:
           - pathType: Prefix
             path: /
