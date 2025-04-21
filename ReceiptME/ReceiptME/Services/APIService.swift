@@ -369,4 +369,24 @@ class APIService {
             completion(.failure(error))
         }
     }
+    
+    // MARK: – Delete Category
+    func deleteCategory(categoryId: Int, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/categories/\(categoryId)") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        let request = createAuthorizedRequest(url: url, method: "DELETE")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                return completion(.failure(error))
+            }
+            guard let http = response as? HTTPURLResponse, 200...299 ~= http.statusCode else {
+                return completion(.failure(APIError.invalidURL))
+            }
+            completion(.success(()))
+        }
+        .resume()
+    }
 }

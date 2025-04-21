@@ -3,6 +3,8 @@
 //  ReceiptME
 //
 
+
+
 import SwiftUI
 import Foundation
 
@@ -25,6 +27,7 @@ struct ReceiptDetailView: View {
     
     // Items in the receipt
     @State private var editableItems: [ReceiptItem] = []
+    @State private var allCategories: [Category] = []
     
     
     // A simple DateFormatter. Adjust to match your desired format.
@@ -36,69 +39,68 @@ struct ReceiptDetailView: View {
     }()
 
     var body: some View {
-        ZStack {
-            // 1) Background gradient
-            LinearGradient(
-                gradient: Gradient(colors: [.pink, .purple, .blue]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            ZStack {
+                // Background gradient
+                LinearGradient(
+                    gradient: Gradient(colors: [.pink, .purple, .blue]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
-            // 2) Content
-            if isEditing {
-                editForm
-            } else {
-                if let details = details {
-                    detailCard(for: details)
-                } else {
-                    // If details haven't loaded or there's an error
-                    ProgressView("Loading details...")
-                        .foregroundColor(.white)
-                        .padding()
-                }
-            }
-        }
-        .navigationTitle("Receipt Detail")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarItems(
-            leading: isEditing ? Button("Cancel") {
-                resetEditableFields()
-                isEditing = false
-            } : nil,
-            trailing: Button(isEditing ? "Save" : "Edit") {
+                // Content
                 if isEditing {
-                    saveMetadataEdits()
-                    // REFRESH RECEIPT AFTER UPDATING
-                    // Fetch the full details for this receipt
-                    viewModel.fetchReceiptDetails(receiptId: receipt.id) { result in
-                        switch result {
-                        case .success(let fetchedDetails):
-                            self.details = fetchedDetails
-                            setupEditableFields(with: fetchedDetails)
-                        case .failure(let error):
-                            print("Error fetching full details (b): \(error)")
-                        }
+                    editForm
+                } else {
+                    if let details = details {
+                        detailCard(for: details)
+                    } else {
+                        ProgressView("Loading details...")
+                            .foregroundColor(.white)
+                            .padding()
                     }
                 }
-                isEditing.toggle()
             }
-        )
-        .onAppear {
-            // Fetch the full details for this receipt
-            viewModel.fetchReceiptDetails(receiptId: receipt.id) { result in
-                switch result {
-                case .success(let fetchedDetails):
-                    self.details = fetchedDetails
-//                    print("fetched details (I): \(fetchedDetails)")
-                    setupEditableFields(with: fetchedDetails)
-                case .failure(let error):
-                    print("Error fetching full details: \(error)")
+            .navigationTitle("Receipt Detail")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(
+                leading: isEditing ? Button("Cancel") {
+                    resetEditableFields()
+                    isEditing = false
+                } : nil,
+                trailing: Button(isEditing ? "Save" : "Edit") {
+                    if isEditing {
+                        saveMetadataEdits()
+                        // Refresh details after saving
+                        viewModel.fetchReceiptDetails(receiptId: receipt.id) { result in
+                            if case .success(let fetched) = result {
+                                self.details = fetched
+                                setupEditableFields(with: fetched)
+                            }
+                        }
+                    }
+                    isEditing.toggle()
+                }
+            )
+            .onAppear {
+                // Fetch details
+                viewModel.fetchReceiptDetails(receiptId: receipt.id) { result in
+                    if case .success(let fetchedDetails) = result {
+                        self.details = fetchedDetails
+                        setupEditableFields(with: fetchedDetails)
+                    }
+                }
+                // Fetch categories for bulk apply
+                APIService.shared.getCategories(year: nil, month: nil) { result in
+                    DispatchQueue.main.async {
+                        if case .success(let cats) = result {
+                            self.allCategories = cats
+                        }
+                    }
                 }
             }
         }
     }
-}
 
 // MARK: - Subviews & Helpers
 extension ReceiptDetailView {
@@ -106,6 +108,24 @@ extension ReceiptDetailView {
     // MARK: Non-Editing State
     private func detailCard(for details: ReceiptDetails) -> some View {
         List {
+
+            Section(header: Text("Quick Category").font(.headline)) {
+                Menu {
+                    ForEach(allCategories) { category in
+                        Button(category.name) {
+                            applyCategoryToAll(category)
+                        }
+                    }
+                } label: {
+                    Label("Apply to All", systemImage: "tag")
+                        .font(.system(.headline, design: .rounded))
+                        .padding(8)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(8)
+                }
+            }
+            .listRowBackground(Color.white.opacity(0.15))
+
             Section {
                 ForEach(editableItems.indices, id: \.self) { index in
                     NavigationLink(destination: ReceiptItemView(
@@ -344,11 +364,36 @@ extension ReceiptDetailView {
 
     }
     
-    private func saveItemEdits() {
-        guard var updatedDetails = details else {
-            print("ERROR: No details available")
-            return
+    /// Bulk‑assign a single category to every line item, by calling your item‑level API on each.
+    private func applyCategoryToAll(_ category: Category) {
+        guard let details = details else { return }
+
+        // 1) Update your UI immediately
+        editableItems = editableItems.map { item in
+            var copy = item
+            copy.category = category.id
+            return copy
         }
+
+        // 2) Push that change to *each* line‑item via the same API you already use
+        for item in editableItems {
+            viewModel.updateReceiptItem(item,
+                                       receipt_id: details.id) { result in
+                if case .failure(let error) = result {
+                    print("Failed to update item \(item.id): \(error)")
+                }
+            }
+        }
+
+        // (Optional) If you want to re‑fetch the full details after all are done:
+        // viewModel.fetchReceiptDetails(receiptId: details.id) { ... }
+    }
+    
+private func saveItemEdits() {
+    guard var updatedDetails = details else {
+        print("ERROR: No details available")
+        return
+    }
         let originalItems = updatedDetails.items
 //        print("PRE UPDATE details in saveItemEdits func: \(originalItems)\n")
         updatedDetails.items = editableItems
