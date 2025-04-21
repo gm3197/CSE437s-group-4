@@ -17,6 +17,7 @@ struct ReceiptItemView: View {
     @State private var selectedCategoryName: String = "Unknown Category"
     
     @Environment(\.dismiss) private var dismiss
+    @State private var are_changes_saved = false
 
     init(receiptId: Int, receiptItem: Binding<ReceiptItem>, saveAction: @escaping () -> Void) {
         self.receiptId = receiptId
@@ -68,6 +69,7 @@ struct ReceiptItemView: View {
             
             
             Picker("Select Category", selection: $selectedCategoryID) {
+                Text("No category selceted").tag(nil as Int?) // default dropdown option
                 ForEach(categories, id: \.id) { category in
                     Text(category.name).tag(category.id as Int?)
                 }
@@ -88,9 +90,14 @@ struct ReceiptItemView: View {
                     saveAction() // update backend
                     isEditing = false
                     dismiss() // pops back to ReceiptDetailView !!
-                }
+                    are_changes_saved = true
             }
             .buttonStyle(SleekButtonStyle())
+            .alert("Changes Saved", isPresented: $are_changes_saved) {
+                
+            } message: {
+                Text("Press ok to continue")
+            }
         }
         .onAppear {
             showCategories()
@@ -124,8 +131,8 @@ struct ReceiptItemView: View {
                         self.selectedCategoryID = matchedCategory.id
                         self.selectedCategoryName = matchedCategory.name
                     } else {
-                        self.selectedCategoryID = fetchedCategories.first?.id // Default to first category
-                        self.selectedCategoryName = fetchedCategories.first?.name ?? "No Category Selected"
+                        self.selectedCategoryID = nil
+                        self.selectedCategoryName = "No Category Selected"
                     }
                     case .failure(let error):
                         print("Error retrieving categories: \(error)")
