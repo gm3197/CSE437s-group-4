@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: receiptme-db
+  labels:
+    app: receiptme-db
+spec:
+  selector:
+    matchLabels:
+      app: receiptme-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: receiptme-db
+    spec:
+      containers:
+        - image: docker.io/library/postgres:latest
+          name: receiptme-db
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: cse437test123
+            - name: POSTGRES_USER
+              value: cse437
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: receiptme-db
+spec:
+  selector:
+    app: receiptme-db
+  ports:
+    - port: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: receiptme
+  labels:
+    app: receiptme
+spec:
+  selector:
+    matchLabels:
+      app: receiptme
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: receiptme
+    spec:
+      containers:
+        - image: receiptme:release
+          imagePullPolicy: Never
+          name: receiptme
+          command: ["python3", "server.py"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_CONNECTION_STRING
+              value: postgresql://cse437:cse437test123@receiptme-db:5432/postgres
+            - name: GOOGLE_AUTH_CLIENT_ID
+              value: 650383131525-anbr9ft0hfl03jbhbl21sokpgchc12tg.apps.googleusercontent.com
+            - name: OPENAI_API_KEY
+              value: <open ai key here>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: receiptme
+spec:
+  type: LoadBalancer
+  selector:
+    app: receiptme
+  ports:
+    - port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: receiptme
+  annotations:
+spec:
+  rules:
+    - http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: receiptme
+                port:
+                  number: 8080

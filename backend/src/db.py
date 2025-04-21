@@ -179,7 +179,7 @@ def get_receipt_item(receipt_id, item_id):
 				"bottom": row[5]
 			}
 		}
-
+  
 def insert_receipt_item(receipt_id, price, description, category_id):
 	with connect() as conn:
 		cur = conn.cursor()
