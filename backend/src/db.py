@@ -148,6 +148,7 @@ def update_receipt(id, merchant, date):
 def delete_receipt(receipt_id):
 	with connect() as conn:
 		cur = conn.cursor()
+		cur.execute("DELETE FROM receipt_items WHERE receipt_id = %s", (receipt_id, ))
 		cur.execute("DELETE FROM receipts WHERE id = %s", (receipt_id, ))
 
 def get_receipt_item(receipt_id, item_id):
