@@ -217,6 +217,63 @@ class APIService {
         }
     }
     
+    // MARK: - Add Receipt Item
+    func addReceiptItem(_ item: NewReceiptItemRequest, to_receipt_with_id receipt_id: Int, completion: @escaping (Result<ReceiptItem, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/receipts/\(receipt_id)") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        do {
+            let jsonData = try JSONEncoder().encode(item)
+            let request = createAuthorizedRequest(url: url, method: "POST", contentType: "application/json", body: jsonData)
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let data = data else {
+                    completion(.failure(APIError.noData))
+                    return
+                }
+
+                do {
+                    let responseData = try JSONDecoder().decode(NewReceiptItemResponse.self, from: data)
+                    
+                    let receiptItem = ReceiptItem(description: item.description, price: item.price, id: responseData.item_id, category: item.category)
+                    
+                    completion(.success(receiptItem))
+                } catch {
+                    completion(.failure(error))
+                }
+            }.resume()
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    
+    // MARK: - Delete Receipt Item
+    func deleteReceiptItem(_ item_id: Int, within_receipt_with_id receiptId: Int, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/receipts/\(receiptId)/items/\(item_id)") else {
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        let request = createAuthorizedRequest(url: url,
+                                              method: "DELETE")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            // Optionally check for a non-2xx HTTP status code here.
+            completion(.success(()))
+        }.resume()
+    }
+
     ///
     // MARK: - Update Receipt Item
     func updateReceiptItem(_ item: ReceiptItem, receipt_id: Int, completion: @escaping (Result<Void, Error>) -> Void) {
