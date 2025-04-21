@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// A styled welcome screen that appears when the user isn’t authenticated.
 struct WelcomeView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome: Bool = false
     @State private var navigateToAuth = false
@@ -47,7 +46,6 @@ struct WelcomeView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            // Tips Card
             VStack(alignment: .leading, spacing: 16) {
                 tipRow(icon: "camera.viewfinder", text: "Tap the scan button to capture receipts instantly.")
                 tipRow(icon: "folder", text: "Organize receipts by category and date for easy lookup.")
@@ -62,7 +60,6 @@ struct WelcomeView: View {
             Spacer()
 
             Button(action: {
-                hasSeenWelcome = true  // optional: track usage
                 navigateToAuth = true
             }) {
                 Text("Get Started")
