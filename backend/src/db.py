@@ -174,10 +174,10 @@ def get_receipt_item(receipt_id, item_id):
 			}
 		}
 
-def insert_receipt_item(receipt_id, price, description):
+def insert_receipt_item(receipt_id, price, description, category_id):
 	with connect() as conn:
 		cur = conn.cursor()
-		cur.execute("INSERT INTO receipt_items (receipt_id, description, price) VALUES (%s, %s, %s) RETURNING id", (receipt_id, description, price))
+		cur.execute("INSERT INTO receipt_items (receipt_id, description, price, category) VALUES (%s, %s, %s, %s) RETURNING id", (receipt_id, description, price, category_id))
 		return cur.fetchone()[0]
 
 def update_receipt_item(item_id, price, description, category_id):
