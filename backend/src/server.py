@@ -82,6 +82,24 @@ def create_category():
 		"month_spend": 0.0,
 	}
 
+@bottle.delete("/categories/<category_id>")
+def delete_category(category_id):
+	user_id, ok = db.check_session_token(bottle.request.get_header("Authorization"))
+	if not ok:
+		bottle.response.status = 403
+		return "Unauthorized"
+
+	category = db.get_category(category_id)
+	if category is None:
+		bottle.response.status = 404
+		return "Not found"
+
+	if category["user_id"] != user_id:
+		bottle.response.status = 401
+		return "Forbidden"
+
+	db.delete_category(category_id)
+	return "Deleted"
 
 @bottle.get("/receipts")
 def get_receipts():
