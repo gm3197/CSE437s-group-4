@@ -63,6 +63,26 @@ def create_category(user_id, name, monthly_goal):
 		cur.execute("INSERT INTO budget_categories (user_id, name, monthly_goal) VALUES (%s, %s, %s) RETURNING id", (user_id, name, monthly_goal))
 		return cur.fetchone()[0]
 
+def get_category(category_id):
+    with connect() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, user_id, name, monthly_goal FROM budget_categories WHERE id = %s", (category_id,))
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return {
+            "id": row[0],
+            "user_id": row[1],
+            "name": row[2],
+            "monthly_goal": row[3],
+        }
+
+def delete_category(category_id):
+    with connect() as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE receipt_items SET category = NULL WHERE category = %s", (category_id,))
+        cur.execute("DELETE FROM budget_categories WHERE id = %s", (category_id,))
+
 def create_receipt(user_id, date, merchant, merchant_address, merchant_domain, payment_method, tax, clean):
 	with connect() as conn:
 		cur = conn.cursor()
