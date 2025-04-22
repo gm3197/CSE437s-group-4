@@ -88,7 +88,7 @@ struct DashboardView: View {
     private var listView: some View {
         List {
             // Budget Categories Section
-            Section(header: Text("Budget Categories").font(.headline)) {
+            Section(header: Text("Budget").font(.headline)) {
                 // Month navigation
                 HStack {
                     Button(action: {
@@ -101,7 +101,7 @@ struct DashboardView: View {
                     }
                     .buttonStyle(.borderless)
                     Spacer()
-                    Text("\(Calendar.current.monthSymbols[month - 1]) \(year)")
+                    Text(verbatim: "\(Calendar.current.monthSymbols[month - 1]) \(year)")
                         .font(.title.bold())
                     Spacer()
                     Button(action: {
@@ -114,7 +114,9 @@ struct DashboardView: View {
                     }
                     .buttonStyle(.borderless)
                 }
-                
+                .listRowBackground(Color.white.opacity(0.15))
+                .listRowSeparator(.hidden, edges: .all)
+
                 // Header with new category button
                 HStack {
                     Text("Categories")
@@ -122,7 +124,8 @@ struct DashboardView: View {
                     Spacer()
                     NewCategoryButton(parent: self)
                 }
-                
+                .listRowBackground(Color.white.opacity(0.15))
+
                 // Category rows
                 ForEach(categories) { category in
                     VStack(alignment: .leading, spacing: 4) {
@@ -156,6 +159,7 @@ struct DashboardView: View {
                     .pickerStyle(.segmented)
                     .frame(width: 80)
                 }
+                .listRowBackground(Color.white.opacity(0.15))
             }
             
             // Receipts Section

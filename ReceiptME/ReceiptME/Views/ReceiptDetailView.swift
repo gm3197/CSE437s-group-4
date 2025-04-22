@@ -85,8 +85,6 @@ struct ReceiptDetailView: View {
                                 )
                 ) {
                     EmptyView() // placeholder... so code is executed w out displaying any real content
-                    
-                    
                 }
             }
             
@@ -112,6 +110,7 @@ struct ReceiptDetailView: View {
                 isEditing.toggle()
             }
         )
+        .navigationBarBackButtonHidden(isEditing)
         .onAppear {
             // Fetch details
             viewModel.fetchReceiptDetails(receiptId: receipt.id) { result in
@@ -138,24 +137,6 @@ extension ReceiptDetailView {
     // MARK: Non-Editing State
     private func detailCard(for details: ReceiptDetails) -> some View {
         List {
-
-            Section(header: Text("Quick Category").font(.headline)) {
-                Menu {
-                    ForEach(allCategories) { category in
-                        Button(category.name) {
-                            applyCategoryToAll(category)
-                        }
-                    }
-                } label: {
-                    Label("Apply to All", systemImage: "tag")
-                        .font(.system(.headline, design: .rounded))
-                        .padding(8)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(8)
-                }
-            }
-            .listRowBackground(Color.white.opacity(0.15))
-
             Section {
                 ForEach(editableItems.indices, id: \.self) { index in
                     NavigationLink(destination: ReceiptItemView(
@@ -188,15 +169,15 @@ extension ReceiptDetailView {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(details.merchant)
                         .font(.title)
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.white)
                     HStack(alignment: .center) {
                         Text(details.date)
                             .font(.caption)
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                         Spacer()
                         Text(details.payment_method)
                             .font(.caption)
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                     }
                 }
                     .padding(.bottom, 8)
@@ -204,22 +185,22 @@ extension ReceiptDetailView {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .center) {
                         Text("Tax")
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                             .font(.system(size: 18))
                         Spacer()
                         Text(String(format: "$%.2f", details.tax))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                             .font(.system(size: 18))
                     }
                     HStack(alignment: .center) {
                         Text("Total")
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                             .font(.system(size: 18, weight: .bold))
                         Spacer()
                         Text(String(format: "$%.2f", details.items.map({ item in
                             item.price
                         }).reduce(0, +) + details.tax))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                             .font(.system(size: 18, weight: .bold))
                     }
                 }
@@ -227,7 +208,22 @@ extension ReceiptDetailView {
             }
                 .listRowBackground(Color.white.opacity(0.15))
                 .textCase(nil)
-            Section {
+            
+            Section(header: Text("Tools")) {
+                Menu {
+                    ForEach(allCategories) { category in
+                        Button(category.name) {
+                            applyCategoryToAll(category)
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "tag")
+                        Text("Apply Category to All Items")
+                    }
+                    .font(.subheadline)
+                    .padding(.vertical, 4)
+                }
                 NavigationLink(destination: {
                     ZStack {
                         LinearGradient(
@@ -255,10 +251,8 @@ extension ReceiptDetailView {
                     .font(.subheadline)
                     .padding(.vertical, 4)
                 })
-            } header: {
-                Spacer(minLength: 64)
             }
-                .listRowBackground(Color.white.opacity(0.15))
+            .listRowBackground(Color.white.opacity(0.15))
         }
             .scrollContentBackground(.hidden) // iOS 16+ to let the gradient show through
     }

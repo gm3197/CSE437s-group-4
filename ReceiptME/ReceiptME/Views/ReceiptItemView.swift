@@ -56,6 +56,7 @@ struct ReceiptItemView: View {
     private var editingView: some View {
         VStack(spacing: 16) {
             AuthenticatedImage(url: "\(APIService.shared.baseURL)/receipts/\(receiptId)/items/\(_receiptItem.id)/scan.png")
+            
             TextField("Item Name", text: $editedItemName)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .font(.system(.body, design: .rounded))
@@ -69,7 +70,7 @@ struct ReceiptItemView: View {
             
             
             Picker("Select Category", selection: $selectedCategoryID) {
-                Text("No category selceted").tag(nil as Int?) // default dropdown option
+                Text("No category selected").tag(nil as Int?) // default dropdown option
                 ForEach(categories, id: \.id) { category in
                     Text(category.name).tag(category.id as Int?)
                 }
