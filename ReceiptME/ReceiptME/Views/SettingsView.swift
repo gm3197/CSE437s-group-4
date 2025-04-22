@@ -13,6 +13,8 @@ struct SettingsView: View {
     @AppStorage("user_permanent_token") var backend_token: String?
     @AppStorage("user_email") var email_: String?
     
+    @State private var showWelcome = false
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -30,13 +32,20 @@ struct SettingsView: View {
                         // 3) User Info Card
                         userInfoCard
                         
-                        // 4) Log Out Button
+                        // 4) Show Welcome Screen Button
                         Button(action: {
-                            // Clear the backend token, effectively logging out
+                            showWelcome = true
+                        }) {
+                            Text("View Welcome Screen")
+                                .font(.system(.headline, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(SleekButtonStyle2())
+                        .padding(.horizontal, 20)
+                        
+                        // 5) Log Out Button
+                        Button(action: {
                             backend_token = nil
-                            // Usually you'd present or navigate back to AuthView,
-                            // e.g. by setting a state var or environment var that triggers a nav change.
-                            // For now, we simply set the token to nil.
                         }) {
                             Text("Log Out")
                                 .font(.system(.headline, design: .rounded))
@@ -51,6 +60,11 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .fullScreenCover(isPresented: $showWelcome) {
+                WelcomeView(onDismiss: {
+                    showWelcome = false
+                })
+            }
         }
     }
     
@@ -92,11 +106,11 @@ struct SleekButtonStyle2: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.95 : 1)
             .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
     }
-    
-    // MARK: - Preview
-    struct SettingsView_Previews: PreviewProvider {
-        static var previews: some View {
-            SettingsView()
-        }
+}
+
+// MARK: - Preview
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView()
     }
 }

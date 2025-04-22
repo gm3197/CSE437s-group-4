@@ -3,6 +3,8 @@ import SwiftUI
 struct WelcomeView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome: Bool = false
     @State private var navigateToAuth = false
+    
+    var onDismiss: (() -> Void)? = nil
 
     var body: some View {
         NavigationStack {
@@ -60,9 +62,13 @@ struct WelcomeView: View {
             Spacer()
 
             Button(action: {
-                navigateToAuth = true
+                if let dismiss = onDismiss {
+                    dismiss()
+                } else {
+                    navigateToAuth = true
+                }
             }) {
-                Text("Get Started")
+                Text("Okay")
                     .font(.system(.headline, design: .rounded))
                     .frame(maxWidth: .infinity)
                     .padding()
