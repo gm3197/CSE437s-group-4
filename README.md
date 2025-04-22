@@ -9,7 +9,7 @@
 &lt;Jeffrey Wang & Victor Durojaiye&gt;
 
 ## Objectives
-&lt; ReceiptME is an AI powered receipt tracking financial tool to help users more gain more clarity on what they are spending money on. &gt;
+&lt; ReceiptME is an AI powered receipt tracking financial tool to help users gain more clarity on what they are spending money on month to month. &gt;
 
 ## How to Run
 Run as Xcode project using Xcode simulator
