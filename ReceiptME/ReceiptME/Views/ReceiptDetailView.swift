@@ -84,7 +84,7 @@ struct ReceiptDetailView: View {
                                     }
                                 )
                 ) {
-                    EmptyView() // placeholder... so code is executed w out displaying any real content
+                    EmptyView()
                 }
             }
             
@@ -137,6 +137,54 @@ extension ReceiptDetailView {
     // MARK: Non-Editing State
     private func detailCard(for details: ReceiptDetails) -> some View {
         List {
+            Section(header: Text("Tools")) {
+                Menu {
+                    ForEach(allCategories) { category in
+                        Button(category.name) {
+                            applyCategoryToAll(category)
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "tag")
+                        Text("Apply Category to All Items")
+                    }
+                    .font(.subheadline)
+                    .padding(.vertical, 4)
+                }
+                NavigationLink(destination: {
+                    ZStack {
+                        LinearGradient(
+                            gradient: Gradient(colors: [.pink, .purple, .blue]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .ignoresSafeArea()
+                        ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                            ScrollViewReader { sp in
+                                AuthenticatedImage(url: "\(APIService.shared.baseURL)/receipts/\(receipt.id)/scan.png")
+                                    .onLoad {
+                                        sp.scrollTo(0, anchor: .center)
+                                    }
+                                    .id(0)
+                            }
+                        }
+                    }
+                    .navigationTitle("Original Receipt Image")
+                }, label: {
+                    HStack {
+                        Image(systemName: "photo.fill")
+                        Text("View Original Receipt Image")
+                    }
+                    .font(.subheadline)
+                    .padding(.vertical, 4)
+                })
+            }
+            .listRowBackground(Color.white.opacity(0.15))
+            .scrollContentBackground(.hidden)
+
+    
+            
             Section {
                 ForEach(editableItems.indices, id: \.self) { index in
                     NavigationLink(destination: ReceiptItemView(
@@ -209,52 +257,10 @@ extension ReceiptDetailView {
                 .listRowBackground(Color.white.opacity(0.15))
                 .textCase(nil)
             
-            Section(header: Text("Tools")) {
-                Menu {
-                    ForEach(allCategories) { category in
-                        Button(category.name) {
-                            applyCategoryToAll(category)
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "tag")
-                        Text("Apply Category to All Items")
-                    }
-                    .font(.subheadline)
-                    .padding(.vertical, 4)
-                }
-                NavigationLink(destination: {
-                    ZStack {
-                        LinearGradient(
-                            gradient: Gradient(colors: [.pink, .purple, .blue]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .ignoresSafeArea()
-                        ScrollView([.horizontal, .vertical], showsIndicators: true) {
-                            ScrollViewReader { sp in
-                                AuthenticatedImage(url: "\(APIService.shared.baseURL)/receipts/\(receipt.id)/scan.png")
-                                    .onLoad {
-                                        sp.scrollTo(0, anchor: .center)
-                                    }
-                                    .id(0)
-                            }
-                        }
-                    }
-                    .navigationTitle("Original Receipt Image")
-                }, label: {
-                    HStack {
-                        Image(systemName: "photo.fill")
-                        Text("View Original Receipt Image")
-                    }
-                    .font(.subheadline)
-                    .padding(.vertical, 4)
-                })
-            }
+           
             .listRowBackground(Color.white.opacity(0.15))
         }
-            .scrollContentBackground(.hidden) // iOS 16+ to let the gradient show through
+            .scrollContentBackground(.hidden)
     }
     
     // subviews that will be called wihtin detailCard VStack
